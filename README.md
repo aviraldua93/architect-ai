@@ -3,15 +3,15 @@
 **AI-powered study tool for the Claude Certified Architect (Foundations) exam.**
 **The codebase IS the curriculum — every file demonstrates an exam concept in production code.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](tsconfig.json)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](src/mcp/)
+[![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)]()
 
 ---
 
 ## What Is This?
 
-ArchitectAI is an open-source study tool that helps you pass the Claude Certified Architect exam — but with a twist: **the codebase itself teaches you the exam concepts**. Every architectural decision, every file, every pattern maps directly to one of the 30 exam task statements across 5 domains.
+ArchitectAI is an open-source study tool for the [Claude Certified Architect (Foundations)](https://www.anthropic.com/certification) exam — but with a twist: **the codebase itself teaches you the exam concepts**. Every architectural decision, every file, every pattern maps directly to one of the 30 exam task statements across 5 domains.
 
 You don't just *read* about agentic loops — you see a production implementation in `src/agents/loop.ts`. You don't just *memorise* hook patterns — you see `PostToolUse` normalisation running live in `src/agents/hooks.ts`.
 
@@ -52,6 +52,8 @@ Every file maps to a specific exam domain and task statement:
 
 ## Quick Start
 
+> ⚠️ **In active development.** Tier 1 commands coming first. Star/watch to get notified.
+
 ```bash
 # Clone
 git clone https://github.com/aviraldua93/architect-ai.git
@@ -69,7 +71,8 @@ bun run assess     # Check your exam readiness
 bun run mcp        # Start MCP server
 
 # Tier 3: Live agents (requires ANTHROPIC_API_KEY)
-export ANTHROPIC_API_KEY=your-key
+export ANTHROPIC_API_KEY=your-key    # macOS/Linux
+# $env:ANTHROPIC_API_KEY="your-key"  # Windows PowerShell
 bun run agent      # Adaptive study session
 ```
 
@@ -117,13 +120,14 @@ This project practices what it preaches. The way it's built IS a demonstration o
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for our branch workflow, review process, and coding standards.
+Contributions welcome! We use a branch-based workflow:
+- Fork → feature branch → PR → review → merge
+- All PRs require review and passing CI (Tier 1 tests)
+- See the repo's `.claude/` directory for project conventions
 
-## Built By
+## About
 
-**ArchitectAI** — a company under [aviraldua93 Ventures](https://github.com/aviraldua93)
-
-Built with ❤️ by a team of 26 using the very agentic patterns this project teaches.
+**ArchitectAI** is an [aviraldua93](https://github.com/aviraldua93) project — built using the very agentic patterns it teaches.
 
 ---
 
