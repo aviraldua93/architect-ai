@@ -5,8 +5,15 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "architect-ai": "./src/cli/index.ts"
+  },
   "scripts": {
-    "dev": "tsc --watch",
+    "start": "bun run src/cli/index.ts",
+    "quiz": "bun run src/cli/index.ts quiz",
+    "study": "bun run src/cli/index.ts study",
+    "assess": "bun run src/cli/index.ts assess",
+    "dev": "bun --watch run src/cli/index.ts",
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "lint": "eslint src/ --ext .ts,.tsx",
@@ -28,14 +35,16 @@
   "author": "Fatima Al-Rashid",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "eslint": "^8.0.0",
+    "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "prettier": "^3.0.0"
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.7.0"
   },
   "dependencies": {
-    "dotenv": "^16.0.0"
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.0.0",
+    "zod": "^3.25.76"
   }
 }
