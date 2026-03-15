@@ -29,7 +29,14 @@ function loadAllQuestions(): Question[] {
 
   for (const file of DOMAIN_FILES) {
     const filePath = join(__dirname, file);
-    const raw = JSON.parse(readFileSync(filePath, 'utf-8'));
+    // Fix RT-003: Never silently swallow JSON parse errors — log filename and rethrow.
+    let raw: unknown;
+    try {
+      raw = JSON.parse(readFileSync(filePath, 'utf-8'));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`[question-loader] Failed to parse JSON file "${file}": ${message}`);
+    }
     const parsed = QuestionBankSchema.parse(raw);
     allQuestions.push(...parsed);
   }

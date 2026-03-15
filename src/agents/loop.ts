@@ -175,9 +175,10 @@ export async function runAgenticLoop(
       );
 
       // Execute each tool call and collect results.
+      // Fix RT-009: Pass conversationHistory to executeToolCall so PostToolUse hooks get it.
       const toolResults: ToolResultBlockParam[] = await Promise.all(
         toolUseBlocks.map((toolUse) =>
-          executeToolCall(toolUse, toolRegistry, hooks),
+          executeToolCall(toolUse, toolRegistry, hooks, conversationHistory),
         ),
       );
 
@@ -211,6 +212,26 @@ export async function runAgenticLoop(
         },
       };
     }
+
+    // Fix LLM-P1-1: Handle unknown/unrecognised stop_reason — treat as end_turn (safe exit)
+    // to prevent a silent infinite loop.
+    console.warn(
+      `[agentic-loop] Unrecognised stop_reason: "${response.stop_reason}". ` +
+        `Treating as end_turn to avoid infinite loop.`,
+    );
+    conversationHistory.push({
+      role: "assistant",
+      content: response.content,
+    });
+    return {
+      finalContent: response.content,
+      conversationHistory,
+      iterations,
+      totalTokens: {
+        input: totalInputTokens,
+        output: totalOutputTokens,
+      },
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -260,6 +281,7 @@ async function executeToolCall(
   toolUse: ToolUseBlock,
   toolRegistry: ToolRegistry,
   hooks?: HookPipeline,
+  conversationHistory: MessageParam[] = [],
 ): Promise<ToolResultBlockParam> {
   const { id: toolUseId, name: toolName, input: toolInput } = toolUse;
   const typedInput = toolInput as Record<string, unknown>;
@@ -316,11 +338,12 @@ async function executeToolCall(
     // -----------------------------------------------------------------------
     if (hooks?.postToolUse) {
       for (const hook of hooks.postToolUse) {
+        // Fix RT-009: Pass the CURRENT conversation history to PostToolUse hooks.
         const hookContext = {
           toolName,
           toolInput: typedInput,
           toolResult: result,
-          conversationHistory: [],
+          conversationHistory,
         };
 
         if (hook.shouldRun(hookContext)) {

@@ -113,9 +113,18 @@ architect-ai/
 │   │   ├── decomposer.ts           Task decomposition strategies (1.6)
 │   │   └── session-state.ts        Session management & resumption (1.7)
 │   ├── tools/                   ← Domain 2: Tool Design (18%)
+│   │   ├── definitions.ts           Tool schemas & descriptions (2.1)
+│   │   └── error-handling.ts        Structured error responses (2.2)
 │   ├── mcp/                     ← Domain 2: MCP Integration
+│   │   └── server.ts                MCP server: resources, tools, prompts (2.4)
 │   ├── prompts/                 ← Domain 4: Prompt Engineering (20%)
+│   │   ├── system-prompts.ts        Agent persona & constraints (4.1)
+│   │   ├── few-shot.ts              Example banks & dynamic selection (4.2)
+│   │   └── output-schemas.ts        Zod validation & retry loops (4.3)
 │   ├── context/                 ← Domain 5: Context Management (15%)
+│   │   ├── session-manager.ts       Session save/load/resume/fork (1.7, 5.1)
+│   │   ├── progress-tracker.ts      Weighted scoring & spaced repetition (5.1)
+│   │   └── escalation.ts            Tier 1→2→3 escalation patterns (5.2)
 │   ├── cli/                     ← Domain 3: CLI & Commands (20%)
 │   └── content/                 ← Pre-generated study material
 │       ├── questions/              150 scenario-based questions
@@ -140,9 +149,17 @@ This project practices what it preaches. The way it's built IS a demonstration o
 
 ## Contributing
 
-Contributions welcome! We use a branch-based workflow:
-- Fork → feature branch → PR → review → merge
-- All PRs require review and passing CI (Tier 1 tests)
+Contributions welcome! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide — branch naming, PR process, testing, code style, and how to add questions.
+
+## Question Banks
+
+| Domain | Status | File |
+|--------|--------|------|
+| 1 — Agentic Architecture | ✅ Complete | `src/content/questions/domain-1-agentic-architecture.json` |
+| 2 — Tool Design & MCP | 🚧 Coming soon | — |
+| 3 — Claude Code Config | ✅ Complete | _(covered in `.claude/` config files)_ |
+| 4 — Prompt Engineering | ✅ Complete | _(embedded in `src/prompts/few-shot.ts` examples)_ |
+| 5 — Context & Reliability | ✅ Complete | _(covered by `src/context/` implementations)_ |
 - See the repo's `.claude/` directory for project conventions
 
 ## About
