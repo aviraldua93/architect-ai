@@ -1,0 +1,542 @@
+[
+  {
+    "id": "d1-q01",
+    "domain": 1,
+    "taskStatement": "1.1",
+    "difficulty": "foundation",
+    "scenario": "A junior developer builds a customer support agent using Claude's Messages API. The agent loops, sending user messages and processing responses. To determine when the agent should stop looping, the developer checks whether response.content[0].type === 'text' — if the first content block is text, the agent prints it and exits the loop.",
+    "question": "What is the most likely cause when this agent prematurely stops before completing a multi-step tool-use task?",
+    "options": {
+      "A": "The agent checks response.content[0].type === 'text' to determine completion instead of checking stop_reason",
+      "B": "The system prompt does not include explicit termination instructions",
+      "C": "The tool definitions are missing required parameters",
+      "D": "The agent's temperature is set too high, causing non-deterministic behavior"
+    },
+    "correctAnswer": "A",
+    "explanation": "Claude can return text content blocks alongside tool_use blocks in the same response — for example, explaining what it's about to do before calling a tool. Checking content[0].type === 'text' is an anti-pattern because the presence of text does NOT mean the agent is done. The correct approach is to check stop_reason === 'end_turn' to detect when Claude has genuinely finished its turn. Option B is wrong because Claude signals completion via stop_reason, not prompt instructions. Option C would cause tool execution errors, not premature stopping. Option D is unrelated to loop termination logic.",
+    "examTrap": "Option B is tempting because developers often think the system prompt controls termination — but Claude's stop_reason is the authoritative signal for when the model considers itself done.",
+    "conceptsTested": ["stop_reason", "agentic loop termination", "anti-pattern: text content check"]
+  },
+  {
+    "id": "d1-q02",
+    "domain": 1,
+    "taskStatement": "1.1",
+    "difficulty": "intermediate",
+    "scenario": "An engineering team deploys an agentic coding assistant that reviews pull requests. The agent uses a while loop capped at 10 iterations. During testing, the team notices the agent frequently stops mid-review on large PRs with many files, outputting 'Maximum iterations reached. Review incomplete.' The agent correctly checks stop_reason === 'end_turn' for normal completion.",
+    "question": "What is the root cause of the incomplete reviews, and what is the best fix?",
+    "options": {
+      "A": "Increase the iteration cap to 100 to accommodate large PRs",
+      "B": "Replace the fixed iteration cap with a budget-aware approach that tracks tokens spent and sets cost limits instead of iteration limits",
+      "C": "Remove the iteration cap entirely and rely solely on stop_reason === 'end_turn'",
+      "D": "Add a system prompt instruction telling Claude to complete reviews within 10 steps"
+    },
+    "correctAnswer": "B",
+    "explanation": "Fixed iteration caps are an anti-pattern because they impose arbitrary limits unrelated to the actual work. A budget-aware approach (tracking token usage or cost) provides a meaningful constraint that scales with task complexity. Option A just moves the arbitrary threshold — a PR with 200 files would still fail. Option C is dangerous in production because a runaway agent could consume unbounded resources. Option D attempts to solve an infrastructure problem with prompt engineering, which is unreliable.",
+    "examTrap": "Option A seems like the quick fix, but the exam rewards understanding that arbitrary iteration caps are themselves the anti-pattern — the number will always be wrong for some tasks.",
+    "conceptsTested": ["anti-pattern: iteration caps", "budget-aware loops", "agentic loop design"]
+  },
+  {
+    "id": "d1-q03",
+    "domain": 1,
+    "taskStatement": "1.1",
+    "difficulty": "foundation",
+    "scenario": "A developer implements an agentic loop for a research assistant. The loop processes Claude's responses and decides what to do next. The current implementation parses Claude's text output looking for phrases like 'I'm done' or 'Task complete' using regex to determine when to stop the loop.",
+    "question": "Why is this natural-language parsing approach problematic for loop termination?",
+    "options": {
+      "A": "Natural language is non-deterministic — Claude may phrase completion differently each time, making regex matching brittle and unreliable",
+      "B": "Parsing text output is too computationally expensive for production systems",
+      "C": "Claude's API does not return text content in agentic responses",
+      "D": "Regex matching adds too much latency to the agentic loop"
+    },
+    "correctAnswer": "A",
+    "explanation": "Parsing natural language for control flow signals is a core anti-pattern. Claude may say 'I've finished the analysis', 'The research is complete', 'All done!', or countless other variations. No regex can reliably capture all of them. The deterministic alternative is checking stop_reason === 'end_turn', which is a structured API field. Option B and D are wrong because regex is computationally trivial. Option C is wrong because Claude does return text content in agentic responses.",
+    "examTrap": "Option C might trick candidates who confuse tool_use-only responses with all agentic responses — Claude frequently returns text alongside tool calls.",
+    "conceptsTested": ["anti-pattern: natural language parsing", "deterministic vs probabilistic control flow", "stop_reason"]
+  },
+  {
+    "id": "d1-q04",
+    "domain": 1,
+    "taskStatement": "1.1",
+    "difficulty": "advanced",
+    "scenario": "A fintech company builds an agent that processes expense reports. The agent must: (1) extract line items from receipts using a vision tool, (2) categorize each expense, (3) check policy compliance, and (4) submit approved items. The team debates two designs: Design A has the model decide when it's done by checking stop_reason, with a 'submit_report' tool the model calls when ready. Design B has the orchestrator check a completion flag set by the 'submit_report' tool's return value, plus stop_reason as a fallback.",
+    "question": "Which design is more appropriate for this financial processing use case, and why?",
+    "options": {
+      "A": "Design A, because the model should drive all decisions in an agentic system and stop_reason is the authoritative completion signal",
+      "B": "Design B, because financial workflows require deterministic completion criteria — the tool return value provides a programmatic signal that the submission actually succeeded, with stop_reason as a safety net",
+      "C": "Design A, because adding a completion flag introduces unnecessary complexity",
+      "D": "Neither — the agent should use a fixed pipeline instead of an agentic loop for financial processing"
+    },
+    "correctAnswer": "B",
+    "explanation": "For financial workflows, relying solely on the model's judgment (stop_reason) is insufficient. The tool's return value provides a deterministic, programmatic confirmation that the submission succeeded. Design B layers defenses: the tool confirms success via its return value, and stop_reason acts as a fallback. Option A over-relies on model judgment for high-stakes financial operations. Option C ignores that the added complexity is justified for financial compliance. Option D is wrong because the variable nature of expense reports (different numbers of items, different policies) benefits from agentic flexibility.",
+    "examTrap": "Option D is tempting because financial processing sounds like it needs rigid pipelines, but expense reports vary in structure and count, making agentic loops appropriate — the key is adding deterministic checkpoints within the loop.",
+    "conceptsTested": ["model-driven decisions", "deterministic completion criteria", "financial processing agents", "defense in depth"]
+  },
+  {
+    "id": "d1-q05",
+    "domain": 1,
+    "taskStatement": "1.1",
+    "difficulty": "advanced",
+    "scenario": "A developer's agentic loop implementation looks like this: while True: response = client.messages.create(...); if response.stop_reason == 'end_turn': break; for block in response.content: if block.type == 'tool_use': result = execute_tool(block); tool_results.append(result). During testing, the agent occasionally enters infinite loops when Claude returns a response with stop_reason === 'end_turn' AND a tool_use block in the same response.",
+    "question": "What is the bug in this loop implementation?",
+    "options": {
+      "A": "The loop checks stop_reason before processing tool_use blocks, so when Claude returns end_turn with a final tool call, that tool call is never executed",
+      "B": "The loop should use stop_reason === 'tool_use' instead of 'end_turn'",
+      "C": "The execute_tool function is not returning results in the correct format",
+      "D": "Claude cannot return both end_turn and tool_use in the same response"
+    },
+    "correctAnswer": "A",
+    "explanation": "The bug is in the ordering: the loop breaks on end_turn BEFORE processing any tool_use blocks in that response. When Claude decides a final tool call is needed and also signals end_turn (indicating it doesn't need to see the result), that tool call is silently dropped. The fix is to process all content blocks first, then check stop_reason. Option B is wrong because stop_reason === 'tool_use' means Claude wants to continue after seeing tool results — checking only for that would miss normal completion. Option D is factually incorrect; Claude can return end_turn with tool_use blocks.",
+    "examTrap": "Option D is the trap — candidates who haven't studied the API deeply may assume stop_reason and content block types are mutually exclusive, but they are independent fields.",
+    "conceptsTested": ["stop_reason", "agentic loop ordering", "tool_use processing", "edge case handling"]
+  },
+  {
+    "id": "d1-q06",
+    "domain": 1,
+    "taskStatement": "1.2",
+    "difficulty": "foundation",
+    "scenario": "An AI startup builds a content creation platform with three specialized agents: a Research Agent that gathers information, a Writing Agent that drafts articles, and an SEO Agent that optimizes content. They implement a hub-and-spoke architecture where a Coordinator Agent manages all three. During testing, the Writing Agent sometimes receives research from the wrong topic because the Coordinator accidentally passes context from a concurrent request.",
+    "question": "What is the primary architectural issue in this multi-agent system?",
+    "options": {
+      "A": "The Coordinator is not properly isolating subagent contexts — each subagent invocation should receive only the context relevant to its specific task",
+      "B": "The hub-and-spoke pattern is wrong; they should use a peer-to-peer architecture instead",
+      "C": "Three agents are too many — they should combine Research and Writing into a single agent",
+      "D": "The SEO Agent should run before the Writing Agent to provide keywords upfront"
+    },
+    "correctAnswer": "A",
+    "explanation": "In hub-and-spoke orchestration, the coordinator's core responsibility is context isolation — ensuring each subagent receives only the information relevant to its task. Cross-contamination between concurrent requests is a context isolation failure. Option B is wrong because hub-and-spoke is the standard pattern for this use case. Option C reduces specialization without addressing the root cause. Option D changes execution order but doesn't fix the context leak.",
+    "examTrap": "Option B is tempting because peer-to-peer might seem to avoid the coordinator bottleneck, but it would make the context isolation problem worse since agents would need to coordinate directly.",
+    "conceptsTested": ["hub-and-spoke architecture", "coordinator responsibilities", "subagent isolation", "context management"]
+  },
+  {
+    "id": "d1-q07",
+    "domain": 1,
+    "taskStatement": "1.2",
+    "difficulty": "intermediate",
+    "scenario": "A large enterprise deploys a customer service multi-agent system. The Coordinator Agent receives customer queries and routes them to specialized agents: Billing Agent, Technical Support Agent, and Returns Agent. The team notices that when a customer's issue spans multiple domains (e.g., a billing error caused by a technical glitch), the Coordinator sends the full query to both the Billing and Technical agents. Both agents attempt to resolve the entire issue independently, sometimes giving contradictory instructions to the customer.",
+    "question": "What is the correct coordinator pattern for handling cross-domain issues?",
+    "options": {
+      "A": "Create a new 'Cross-Domain Agent' that handles all multi-domain issues",
+      "B": "The Coordinator should decompose the issue into domain-specific subtasks, dispatch each to the relevant agent with only that subtask's context, then synthesize their outputs into a coherent response",
+      "C": "Route to whichever agent matches the primary issue category and let it handle everything",
+      "D": "Have both agents run and pick the longer response since it's likely more thorough"
+    },
+    "correctAnswer": "B",
+    "explanation": "The coordinator's job in hub-and-spoke is to decompose, delegate, and synthesize. For cross-domain issues, it should break the problem into domain-specific subtasks, give each agent only its relevant portion with clear boundaries, then combine the results. Option A creates a monolithic handler that defeats the purpose of specialization. Option C ignores part of the customer's issue. Option D has no logical basis for quality selection.",
+    "examTrap": "Option A sounds reasonable — a 'Cross-Domain Agent' — but it violates the principle of narrow decomposition by creating a catch-all agent that would need all domain knowledge.",
+    "conceptsTested": ["coordinator responsibilities", "task decomposition", "multi-agent synthesis", "hub-and-spoke pattern"]
+  },
+  {
+    "id": "d1-q08",
+    "domain": 1,
+    "taskStatement": "1.2",
+    "difficulty": "advanced",
+    "scenario": "A development team builds a multi-agent code review system. The Coordinator spawns subagents for: security scanning, style checking, performance analysis, and test coverage. Each subagent has access to the full repository via file-reading tools. The team discovers that the Security Scanning Agent occasionally modifies files it's reviewing because it has access to a file-write tool that was included in the shared tool set. This accidentally introduces changes into the codebase during review.",
+    "question": "What principle was violated, and what is the correct fix?",
+    "options": {
+      "A": "Remove the file-write tool from the system entirely",
+      "B": "Add a system prompt instruction telling the Security Agent not to write files",
+      "C": "Enforce subagent isolation by giving each subagent only the tools it needs — the Security Agent should only have read-only file access and security scanning tools via allowedTools",
+      "D": "Run the Security Agent in a Docker container to prevent file system access"
+    },
+    "correctAnswer": "C",
+    "explanation": "Subagent isolation means each agent should have the minimum set of tools required for its task (principle of least privilege). The Security Agent only needs to read and analyze code, not modify it. Using allowedTools when spawning subagents ensures they can only use explicitly permitted tools. Option A is too broad — other parts of the system may need file-write. Option B uses prompt-based enforcement for a security concern, which is unreliable. Option D is infrastructure overkill when the SDK provides tool-level isolation.",
+    "examTrap": "Option B is the trap — the exam consistently rewards programmatic enforcement over prompt-based enforcement for security concerns. 'Tell the model not to' is never the right answer for access control.",
+    "conceptsTested": ["subagent isolation", "allowedTools", "principle of least privilege", "programmatic vs prompt-based enforcement"]
+  },
+  {
+    "id": "d1-q09",
+    "domain": 1,
+    "taskStatement": "1.2",
+    "difficulty": "foundation",
+    "scenario": "A team designs a multi-agent system for processing insurance claims. They create an agent for each micro-step: one agent extracts the claimant name, another extracts the date, another extracts the amount, another validates the name format, another validates the date format, and so on — 15 agents total for a single claim. The system is extremely slow and expensive.",
+    "question": "What multi-agent orchestration anti-pattern does this system exhibit?",
+    "options": {
+      "A": "Too few agents — they need more specialization",
+      "B": "Narrow decomposition failure — the tasks are decomposed too granularly, creating excessive overhead from agent invocation costs and inter-agent communication without meaningful benefit",
+      "C": "Missing coordinator — they need a hub agent to manage the 15 subagents",
+      "D": "Wrong model selection — they should use a larger model for each agent"
+    },
+    "correctAnswer": "B",
+    "explanation": "This is the narrow decomposition failure anti-pattern. Each agent invocation has overhead: API calls, context assembly, response parsing. When tasks are decomposed into trivially small units (extract one field), the overhead dominates the actual work. A single 'Claims Extraction Agent' could extract all fields in one pass. Option A would make the problem worse. Option C adds coordination overhead on top of already excessive decomposition. Option D doesn't address the architectural flaw.",
+    "examTrap": "Option C sounds like a valid improvement (coordination is good!), but adding a coordinator to an over-decomposed system just adds another layer of overhead — the root cause is too many agents, not missing coordination.",
+    "conceptsTested": ["narrow decomposition failure", "agent invocation overhead", "multi-agent anti-patterns"]
+  },
+  {
+    "id": "d1-q10",
+    "domain": 1,
+    "taskStatement": "1.2",
+    "difficulty": "intermediate",
+    "scenario": "A coordinator agent manages a document processing pipeline. When a subagent fails (e.g., the OCR agent can't read a scanned document), the coordinator currently crashes with an unhandled exception. The team wants the coordinator to handle subagent failures gracefully and either retry, fall back to an alternative approach, or report the failure with context.",
+    "question": "What is the recommended pattern for handling subagent failures in a hub-and-spoke architecture?",
+    "options": {
+      "A": "Wrap each subagent invocation in try/catch, and on failure, pass the error context back to the coordinator's LLM so it can decide whether to retry with different parameters, try an alternative subagent, or report the failure to the user",
+      "B": "Add retry logic with exponential backoff at the network layer for all API calls",
+      "C": "Have subagents catch their own errors and always return a 'success' response with empty results",
+      "D": "Implement a global error handler that restarts the entire pipeline on any failure"
+    },
+    "correctAnswer": "A",
+    "explanation": "The coordinator should treat subagent failures as actionable information. By catching errors and feeding them back to the coordinator's LLM with context, the system can make intelligent recovery decisions: retry with different parameters, delegate to an alternative agent, or gracefully report the failure. Option B only handles transient network issues, not logical failures. Option C masks errors and produces silent failures. Option D is disproportionate — restarting the entire pipeline for one agent's failure wastes completed work.",
+    "examTrap": "Option B seems practical and is commonly used, but it only addresses transient infrastructure errors — it doesn't help when the subagent's task itself fails (e.g., an unreadable document won't become readable through retries).",
+    "conceptsTested": ["coordinator error handling", "graceful degradation", "hub-and-spoke resilience", "proportionate response"]
+  },
+  {
+    "id": "d1-q11",
+    "domain": 1,
+    "taskStatement": "1.3",
+    "difficulty": "intermediate",
+    "scenario": "A developer uses the Task tool to spawn a subagent for database migration analysis. The subagent needs to read migration files and the database schema, but should NOT be able to execute SQL commands or modify files. The developer configures the Task tool invocation with all available tools.",
+    "question": "How should the developer correctly restrict the subagent's capabilities?",
+    "options": {
+      "A": "Add a system prompt instruction: 'Do not execute SQL or modify files'",
+      "B": "Use the allowedTools parameter to explicitly list only the file-read and schema-inspection tools the subagent needs",
+      "C": "Run the subagent with a less capable model that can't use dangerous tools",
+      "D": "Post-process the subagent's output to filter out any SQL commands"
+    },
+    "correctAnswer": "B",
+    "explanation": "The allowedTools parameter provides programmatic, deterministic restriction of subagent capabilities. By explicitly listing only read-related tools, the subagent physically cannot call SQL execution or file modification tools regardless of what it attempts. Option A relies on prompt compliance, which is not guaranteed. Option C doesn't actually restrict tool access. Option D is reactive rather than preventive — damage would already be done.",
+    "examTrap": "Option A is the classic trap — it sounds reasonable but the exam heavily penalizes prompt-based enforcement for security and access control. Programmatic restrictions via allowedTools are always preferred.",
+    "conceptsTested": ["allowedTools", "subagent invocation", "Task tool", "principle of least privilege"]
+  },
+  {
+    "id": "d1-q12",
+    "domain": 1,
+    "taskStatement": "1.3",
+    "difficulty": "advanced",
+    "scenario": "An orchestrator needs to analyze a large codebase. It spawns three subagents in parallel: one to analyze the frontend (React components), one for the backend (API routes), and one for the database layer (models and migrations). Each subagent needs to know the overall project context but should only deeply analyze its assigned layer. The developer passes the entire conversation history to each subagent.",
+    "question": "What is the problem with passing the full conversation history to each parallel subagent?",
+    "options": {
+      "A": "It exceeds Claude's context window limit",
+      "B": "Each subagent wastes tokens processing irrelevant context, and may get confused by instructions or findings meant for other layers — the correct approach is to pass a focused metadata summary plus only the context relevant to each subagent's specific scope",
+      "C": "Parallel subagent spawning is not supported and they must run sequentially",
+      "D": "The conversation history might contain sensitive data that should not be shared"
+    },
+    "correctAnswer": "B",
+    "explanation": "Effective subagent invocation requires curated context. Passing the full conversation history to each subagent causes: (1) wasted tokens on irrelevant information, (2) attention dilution where the model focuses on irrelevant details, and (3) potential confusion from instructions meant for other agents. The correct pattern is to construct a focused context for each subagent containing a brief project summary and only the information relevant to its scope. Option A may not be true for all conversation sizes. Option C is wrong — parallel spawning is a key feature. Option D is a secondary concern, not the primary issue.",
+    "examTrap": "Option A seems like the obvious problem for large codebases, but the real issue is attention dilution and wasted computation, not context window limits — even within limits, irrelevant context degrades performance.",
+    "conceptsTested": ["context passing", "metadata-based context", "parallel spawning", "attention dilution"]
+  },
+  {
+    "id": "d1-q13",
+    "domain": 1,
+    "taskStatement": "1.3",
+    "difficulty": "foundation",
+    "scenario": "A coordinator agent needs to spawn a subagent to investigate a bug report. The subagent should search the codebase, read relevant files, and return its findings. The developer wants to use the Task tool with agent_type 'explore' for this investigation.",
+    "question": "What is a key characteristic of the 'explore' agent type that the developer must account for?",
+    "options": {
+      "A": "Explore agents can modify files and should be given write permissions",
+      "B": "Explore agents are stateless — they lose all context between calls, so the developer must provide complete context in every invocation including the bug report details and any prior findings",
+      "C": "Explore agents can only search by filename and cannot read file contents",
+      "D": "Explore agents require a persistent database connection to store findings"
+    },
+    "correctAnswer": "B",
+    "explanation": "Explore agents are stateless — each invocation starts from scratch with no memory of previous calls. This means the developer must include all relevant context (the bug report, any prior findings, specific questions) in every Task tool prompt. If context is omitted, the explore agent will repeat work or miss important information. Option A is wrong — explore agents are read-only. Option C is wrong — they can read files, search content, and more. Option D is wrong — they don't require database connections.",
+    "examTrap": "Option A is the trap — candidates might assume all agents can modify files, but explore agents are specifically designed for safe, read-only investigation.",
+    "conceptsTested": ["Task tool", "explore agent type", "stateless subagents", "context passing"]
+  },
+  {
+    "id": "d1-q14",
+    "domain": 1,
+    "taskStatement": "1.3",
+    "difficulty": "advanced",
+    "scenario": "A team builds an automated code refactoring system. The coordinator identifies 20 files that need the same refactoring pattern applied. The developer considers two approaches: (A) spawning 20 sequential subagents, one per file, each waiting for the previous to complete; or (B) spawning subagents in batches of 5, running 4 batches sequentially, where each batch runs 5 subagents in parallel.",
+    "question": "Why is Approach B superior, and what must the developer ensure when using parallel spawning?",
+    "options": {
+      "A": "Approach B is faster due to parallelism, but the developer must ensure no two parallel subagents modify the same file and that each receives only its assigned file's context",
+      "B": "Approach B is actually worse because parallel subagents interfere with each other's file system operations",
+      "C": "Approach B is better only because it uses fewer API calls total",
+      "D": "Both approaches are equivalent since Claude processes all requests sequentially on the server side"
+    },
+    "correctAnswer": "A",
+    "explanation": "Parallel spawning dramatically reduces wall-clock time. With Approach A, 20 sequential agents take 20× the time of a single agent. Approach B takes ~4× the time (4 sequential batches). The critical requirement is isolation: parallel subagents must not operate on the same files (avoiding race conditions) and must receive scoped context (only their assigned files). Option B is wrong because properly isolated subagents don't interfere. Option C is wrong — both make 20 agent calls; the difference is concurrency. Option D is wrong — parallel API requests are processed concurrently.",
+    "examTrap": "Option B might worry candidates about file system conflicts, but this is solved by proper task decomposition — assigning each subagent unique files eliminates contention.",
+    "conceptsTested": ["parallel spawning", "subagent isolation", "batch processing", "task decomposition for parallelism"]
+  },
+  {
+    "id": "d1-q15",
+    "domain": 1,
+    "taskStatement": "1.4",
+    "difficulty": "foundation",
+    "scenario": "A healthcare company builds an agent that processes patient intake forms. The workflow has three steps: (1) extract patient information, (2) verify insurance eligibility, and (3) schedule an appointment. The developer implements the workflow enforcement purely through the system prompt: 'Always extract patient info first, then verify insurance, then schedule the appointment. Never skip steps.'",
+    "question": "What is the risk of using prompt-based workflow enforcement for this healthcare application?",
+    "options": {
+      "A": "The system prompt is too long and will be truncated",
+      "B": "Prompt-based enforcement is probabilistic — the model may skip or reorder steps, which is unacceptable for healthcare workflows where insurance must be verified before scheduling. Programmatic enforcement (code that gates each step) is required for compliance-critical workflows",
+      "C": "The system prompt approach is fine for healthcare as long as the temperature is set to 0",
+      "D": "The prompt needs more detailed instructions for each step"
+    },
+    "correctAnswer": "B",
+    "explanation": "Prompt-based workflow enforcement is inherently probabilistic. Even with clear instructions, there's no guarantee the model will follow the exact order every time. For healthcare and other compliance-critical domains, programmatic enforcement is mandatory — the code should explicitly gate each step, only allowing Step 2 after Step 1 completes successfully, and Step 3 after Step 2. Option A is unlikely for a short prompt. Option C is wrong because temperature=0 doesn't guarantee instruction following for complex workflows. Option D adds more prompt engineering to an approach that's fundamentally unreliable for compliance.",
+    "examTrap": "Option C is tempting — setting temperature to 0 seems like it would make behavior deterministic, but temperature only affects token sampling, not instruction adherence for multi-step workflows.",
+    "conceptsTested": ["prompt-based vs programmatic enforcement", "compliance-critical workflows", "healthcare agent design"]
+  },
+  {
+    "id": "d1-q16",
+    "domain": 1,
+    "taskStatement": "1.4",
+    "difficulty": "intermediate",
+    "scenario": "A financial services firm builds a loan approval agent. The workflow requires: (1) credit check, (2) income verification, (3) risk assessment, (4) approval/denial decision. The team debates two designs. Design A: Let the agent decide the order and which steps to perform based on the application. Design B: Hard-code the workflow sequence in the orchestrator, only calling the agent for individual step execution.",
+    "question": "Which design is correct for loan approval, and why?",
+    "options": {
+      "A": "Design A, because the agent can optimize the workflow by skipping unnecessary steps",
+      "B": "Design B, because financial workflows require programmatic enforcement — regulatory compliance demands that every step is executed in order with deterministic guarantees that no step is skipped",
+      "C": "Design A with additional monitoring to catch when steps are skipped",
+      "D": "Design B, but only because it's faster — both designs are equally safe"
+    },
+    "correctAnswer": "B",
+    "explanation": "Loan approval is a regulated financial process. Every step must be completed in order for regulatory compliance. Programmatic enforcement means the code (not the model) controls the workflow: Step 2 only runs after Step 1 succeeds, etc. The model is used for intelligence within each step (analyzing documents, assessing risk) but never controls step sequencing. Option A violates regulatory requirements by allowing step-skipping. Option C is monitoring after the fact — damage is already done if a step is skipped. Option D gives the right answer for the wrong reason — safety, not speed, is the driver.",
+    "examTrap": "Option C seems like a reasonable compromise — 'let the agent be flexible but add monitoring' — but for financial compliance, monitoring is not a substitute for prevention. The exam rewards prevention (programmatic enforcement) over detection (monitoring).",
+    "conceptsTested": ["programmatic enforcement", "financial workflows", "regulatory compliance", "workflow sequencing"]
+  },
+  {
+    "id": "d1-q17",
+    "domain": 1,
+    "taskStatement": "1.4",
+    "difficulty": "advanced",
+    "scenario": "A company builds a customer onboarding agent with 5 steps. Steps 1-3 (collect info, create account, send welcome email) are strict sequential requirements. Steps 4-5 (recommend products, schedule follow-up) are optional enhancements that can happen in any order. The developer enforces ALL 5 steps programmatically with rigid sequential gating.",
+    "question": "What is the design problem with this approach?",
+    "options": {
+      "A": "Five steps is too many for an agent to handle",
+      "B": "The developer correctly enforces all steps — no changes needed",
+      "C": "The developer over-constrains the workflow. Steps 1-3 should be programmatically enforced as they are mandatory and sequential, but steps 4-5 should use prompt-based guidance since they are optional and order-independent — the agent can add value by adapting their execution based on context",
+      "D": "All steps should use prompt-based enforcement to maximize agent flexibility"
+    },
+    "correctAnswer": "C",
+    "explanation": "The right approach matches enforcement to stakes. Mandatory, sequential steps (account creation, welcome email) need programmatic enforcement because skipping them causes real problems. Optional, flexible steps (product recommendations, follow-ups) benefit from agent intelligence — the agent might skip product recommendations for a customer who already knows what they want. Over-constraining removes the value the agent brings. Option A has no basis. Option B ignores the opportunity cost of over-constraining optional steps. Option D under-constrains critical steps.",
+    "examTrap": "Option B seems safe — 'more enforcement is always better' — but the exam tests whether candidates understand that enforcement should be proportionate. Over-constraining optional steps wastes the agent's adaptive intelligence.",
+    "conceptsTested": ["proportionate enforcement", "mandatory vs optional steps", "prompt-based vs programmatic enforcement", "structured handoff"]
+  },
+  {
+    "id": "d1-q18",
+    "domain": 1,
+    "taskStatement": "1.4",
+    "difficulty": "foundation",
+    "scenario": "An agent handles employee offboarding with security implications: revoke access credentials, disable accounts, transfer data, and wipe devices. The developer implements this as an agentic loop where Claude decides which offboarding actions to take and in what order based on the employee's role and department.",
+    "question": "What is the critical flaw in this design?",
+    "options": {
+      "A": "The agent should use a more capable model for security-related tasks",
+      "B": "Security-critical operations like access revocation must use programmatic enforcement with a deterministic sequence — not model-driven decisions. Every offboarding step must execute in a guaranteed order to prevent security gaps like a data transfer happening after credentials are revoked",
+      "C": "The agent needs more detailed instructions about security procedures in its system prompt",
+      "D": "The agent should confirm each action with a human before executing"
+    },
+    "correctAnswer": "B",
+    "explanation": "Security operations demand deterministic execution. If the model decides to skip credential revocation or execute steps out of order, it creates security vulnerabilities. For example, wiping a device before transferring data causes data loss, or transferring data before revoking access allows the former employee to access transferred data. Programmatic enforcement ensures every step runs in the correct order. Option A doesn't address the ordering issue. Option C uses prompts for security enforcement (anti-pattern). Option D adds latency but doesn't fix the ordering problem.",
+    "examTrap": "Option D (human-in-the-loop) sounds responsible, but it addresses a different concern. The issue isn't whether to perform the actions — it's guaranteeing the order. Human confirmation doesn't fix missing or misordered steps.",
+    "conceptsTested": ["security-critical workflows", "programmatic enforcement", "deterministic execution", "workflow ordering"]
+  },
+  {
+    "id": "d1-q19",
+    "domain": 1,
+    "taskStatement": "1.5",
+    "difficulty": "intermediate",
+    "scenario": "A team uses the Agent SDK to build a code deployment agent. They want to automatically log every tool call the agent makes for audit purposes. They consider two approaches: (1) Adding 'Log every action you take' to the system prompt and parsing the agent's text output for action logs. (2) Implementing a PostToolUse hook that captures the tool name, parameters, and result after every tool execution.",
+    "question": "Which approach is correct for audit logging, and why?",
+    "options": {
+      "A": "Approach 1, because the agent's self-reported logs provide more context about its reasoning",
+      "B": "Approach 2, because PostToolUse hooks provide deterministic, programmatic capture of every tool invocation — they cannot be skipped or misreported by the model, which is essential for audit trails",
+      "C": "Both approaches together for defense in depth",
+      "D": "Neither — audit logging should be implemented at the API gateway level"
+    },
+    "correctAnswer": "B",
+    "explanation": "Audit logging requires completeness and accuracy guarantees. PostToolUse hooks fire programmatically after every tool execution, capturing exact parameters and results. They cannot be forgotten, skipped, or inaccurately reported by the model. Approach 1 relies on the model's willingness and ability to accurately log its own actions — it might omit actions, misreport parameters, or format logs inconsistently. Option A values reasoning context over reliability. Option C adds complexity without benefit since hooks already capture everything. Option D misses agent-level granularity.",
+    "examTrap": "Option C sounds like defense in depth (a good principle), but adding unreliable model-generated logs alongside reliable hooks just introduces noise and confusion — the hooks are sufficient and authoritative.",
+    "conceptsTested": ["PostToolUse hooks", "audit logging", "programmatic vs prompt-based", "Agent SDK hooks"]
+  },
+  {
+    "id": "d1-q20",
+    "domain": 1,
+    "taskStatement": "1.5",
+    "difficulty": "advanced",
+    "scenario": "A company's agent has a 'send_email' tool. The security team requires that: (1) all outgoing emails are scanned for sensitive data (PII, credentials) before sending, and (2) emails to external domains require manager approval. The developer considers implementing these checks as: Option A — system prompt instructions saying 'Never include PII in emails and always ask for approval before emailing external addresses'. Option B — a tool call interception hook that programmatically scans the email body for PII patterns and checks the recipient domain, blocking the tool call if violations are found.",
+    "question": "Which implementation is correct?",
+    "options": {
+      "A": "Option A, because the model understands what constitutes PII better than regex patterns",
+      "B": "Option B, because security enforcement must be programmatic and deterministic — hook-based interception guarantees every email is scanned and external emails are gated, regardless of model behavior",
+      "C": "Option A for PII detection (model is better at understanding context) and Option B for domain checking (deterministic)",
+      "D": "Option B for a first pass, but also include Option A as a secondary check"
+    },
+    "correctAnswer": "B",
+    "explanation": "Security controls must be programmatic. Hook-based interception intercepts the tool call before execution, making it impossible for an email to be sent without passing PII scanning and domain approval checks. Option A relies on the model to self-police, which cannot be guaranteed. Option C splits enforcement inconsistently — PII leakage is a security concern that requires deterministic enforcement. Option D adds prompt-based checks that provide false confidence without additional security value.",
+    "examTrap": "Option C is cleverly designed — it acknowledges that LLMs are good at understanding PII in context. While true, the exam principle is clear: security enforcement = programmatic. The model's PII understanding can inform the hook's rules, but the enforcement must be code-based.",
+    "conceptsTested": ["tool call interception", "security enforcement", "hooks vs prompts", "Agent SDK hooks"]
+  },
+  {
+    "id": "d1-q21",
+    "domain": 1,
+    "taskStatement": "1.5",
+    "difficulty": "foundation",
+    "scenario": "A developer building an agent needs to decide whether to use Agent SDK hooks or system prompt instructions for the following requirement: 'When the agent reads a file larger than 1MB, it should automatically summarize the file instead of including the raw content in the conversation.'",
+    "question": "Should this requirement be implemented with a hook or a prompt instruction?",
+    "options": {
+      "A": "System prompt instruction, because summarization is a reasoning task best handled by the model",
+      "B": "A PostToolUse hook that checks the file size and, if over 1MB, replaces the raw content with a request for the model to summarize it — this ensures the behavior is deterministic and the context window isn't accidentally overwhelmed",
+      "C": "Neither — file size limits should be handled by the operating system",
+      "D": "A pre-tool hook that prevents reading large files entirely"
+    },
+    "correctAnswer": "B",
+    "explanation": "This is a perfect hook use case. The trigger condition is deterministic (file size > 1MB), and the consequence is structural (managing context window usage). A PostToolUse hook can inspect the tool result, check size, and modify the result before it enters the conversation — replacing massive file contents with a truncated version plus a summary request. Option A risks the model including the full content anyway, potentially overflowing the context. Option D is too restrictive — the file still needs to be processed, just differently. Option C misunderstands the architectural layer.",
+    "examTrap": "Option A seems logical because summarization IS a model task — but the decision to summarize (based on file size) is a deterministic trigger that should be enforced programmatically, not left to the model's judgment.",
+    "conceptsTested": ["PostToolUse hooks", "hooks vs prompts decision framework", "context window management", "deterministic triggers"]
+  },
+  {
+    "id": "d1-q22",
+    "domain": 1,
+    "taskStatement": "1.5",
+    "difficulty": "intermediate",
+    "scenario": "A team uses Agent SDK hooks extensively in their agent. They have hooks for: logging every tool call, rate-limiting API calls, masking PII in outputs, validating input formats, caching repeated tool calls, and formatting response styles. The agent has become slow, and debugging is difficult because hook interactions are complex.",
+    "question": "What principle should guide the team's use of hooks?",
+    "options": {
+      "A": "Remove all hooks and rely on prompt instructions instead",
+      "B": "Use hooks for deterministic, structural concerns (logging, security, rate-limiting) and prompts for behavioral concerns (response formatting, style). Caching and validation may be better handled by tool implementation. Over-hooking creates opaque control flow that's hard to debug",
+      "C": "Add more hooks to debug the existing hooks",
+      "D": "Replace hooks with a middleware pipeline for all concerns"
+    },
+    "correctAnswer": "B",
+    "explanation": "Hooks should handle deterministic, structural concerns: things that MUST happen consistently (logging, PII masking, rate limits). Behavioral concerns like response formatting are better handled by prompts since they're about style, not safety. Caching and validation are often better placed in the tool implementation itself. Over-hooking creates a 'hook spaghetti' problem where debugging requires understanding complex hook interactions. Option A is extreme and loses security benefits. Option C compounds the complexity problem. Option D replaces one complexity with another.",
+    "examTrap": "Option D sounds like good engineering (middleware is a proven pattern), but hooks ARE the middleware layer in Agent SDK — replacing them with custom middleware loses SDK integration benefits.",
+    "conceptsTested": ["hooks vs prompts decision framework", "hook overuse", "separation of concerns", "Agent SDK best practices"]
+  },
+  {
+    "id": "d1-q23",
+    "domain": 1,
+    "taskStatement": "1.6",
+    "difficulty": "foundation",
+    "scenario": "A developer builds an agent to analyze customer feedback. The current design uses a single agent that: reads all feedback entries, categorizes each one, identifies sentiment, extracts key themes, generates a summary report, and creates action items. With 500 feedback entries, the agent's performance degrades significantly — it misses entries, miscategorizes items, and produces incomplete summaries.",
+    "question": "What is causing the performance degradation, and what is the architectural fix?",
+    "options": {
+      "A": "The model needs a larger context window to handle 500 entries",
+      "B": "Attention dilution — the single agent is trying to hold too many concerns simultaneously. The fix is a multi-pass architecture: one pass for categorization, one for sentiment, one for theme extraction, and a final synthesis pass",
+      "C": "The feedback data should be stored in a database instead of processed by an agent",
+      "D": "The agent needs a more detailed system prompt explaining each analysis step"
+    },
+    "correctAnswer": "B",
+    "explanation": "Attention dilution occurs when a model tries to do too many things at once. With 500 entries and multiple analysis dimensions, the model's attention is spread too thin, leading to missed items and errors. A multi-pass architecture solves this by focusing each pass on a single concern: Pass 1 categorizes all entries, Pass 2 analyzes sentiment on categorized entries, Pass 3 extracts themes, and Pass 4 synthesizes findings. Each pass can focus its full attention on one task. Option A might help but doesn't address the root cause. Option C avoids the problem instead of solving it. Option D doesn't fix attention dilution.",
+    "examTrap": "Option A is tempting because a larger context window seems like it would fix the 'too many entries' problem — but attention dilution is about cognitive load on the model, not token capacity.",
+    "conceptsTested": ["attention dilution", "multi-pass architecture", "task decomposition"]
+  },
+  {
+    "id": "d1-q24",
+    "domain": 1,
+    "taskStatement": "1.6",
+    "difficulty": "intermediate",
+    "scenario": "A team designs an agent system for processing legal contracts. The pipeline is: (1) parse document structure, (2) extract key clauses, (3) compare against standard templates, (4) flag deviations, (5) generate risk report. The team hard-codes this as a fixed 5-step pipeline where each step always runs in order. They later discover that some contracts are simple amendments that only need steps 1, 4, and 5.",
+    "question": "What is the task decomposition issue, and how should it be resolved?",
+    "options": {
+      "A": "Create separate pipelines for each contract type",
+      "B": "The fixed pipeline doesn't account for varying contract complexity. The solution is dynamic task decomposition — use the coordinator to assess the contract type first, then determine which steps are needed. Simple amendments skip extraction and comparison; full contracts run all steps",
+      "C": "Always run all 5 steps for consistency, even if some steps produce no output",
+      "D": "Let each step decide if it should run based on its own input"
+    },
+    "correctAnswer": "B",
+    "explanation": "Fixed pipelines are efficient when every task is identical, but they waste resources on variable inputs. Dynamic task decomposition uses a classification step to determine the optimal pipeline for each input. Simple amendments don't need full clause extraction or template comparison. The coordinator assesses the input and constructs an appropriate pipeline. Option A creates maintenance burden with many separate pipelines. Option C wastes resources on unnecessary steps. Option D distributes the decision without centralized intelligence.",
+    "examTrap": "Option C seems safe — 'always run everything for consistency' — but the exam values proportionate responses. Running unnecessary steps wastes tokens and time without improving quality.",
+    "conceptsTested": ["fixed vs dynamic pipelines", "task decomposition", "contract complexity", "adaptive workflows"]
+  },
+  {
+    "id": "d1-q25",
+    "domain": 1,
+    "taskStatement": "1.6",
+    "difficulty": "advanced",
+    "scenario": "An agent system processes research papers. The coordinator decomposes the task into: (1) abstract analysis, (2) methodology review, (3) results evaluation, (4) citation verification. Each subtask is assigned to a subagent. The Citation Verification agent needs to check 200 references, but its performance drops severely after the first 50 citations due to context accumulation from verified results.",
+    "question": "What decomposition strategy should be applied to the Citation Verification subtask?",
+    "options": {
+      "A": "Increase the context window size for the Citation Verification agent",
+      "B": "Apply recursive decomposition — break the 200 citations into batches of 25, process each batch with a fresh subagent that receives only its batch plus a structured accumulator of prior results, then merge all batch results",
+      "C": "Have the coordinator verify citations itself alongside other tasks",
+      "D": "Skip citation verification for papers with more than 50 references"
+    },
+    "correctAnswer": "B",
+    "explanation": "Recursive decomposition applies the same decomposition principle at a subtask level. By batching 200 citations into groups of 25, each subagent starts fresh with a clean context. A structured accumulator (not the full conversation history) carries forward only essential results: which citations passed, which failed, and why. This prevents context accumulation while preserving the knowledge from earlier batches. Option A delays but doesn't prevent the accumulation problem. Option C overloads the coordinator. Option D sacrifices quality for convenience.",
+    "examTrap": "Option A seems logical — more context should help — but the problem isn't context capacity, it's that accumulated results degrade performance even within capacity. Fresh starts with structured summaries outperform bloated contexts.",
+    "conceptsTested": ["recursive decomposition", "context accumulation", "batch processing", "structured accumulators"]
+  },
+  {
+    "id": "d1-q26",
+    "domain": 1,
+    "taskStatement": "1.6",
+    "difficulty": "advanced",
+    "scenario": "A team builds an agent for competitive analysis. The agent must analyze 10 competitor companies, each requiring web research, financial data extraction, product comparison, and SWOT analysis. The initial design creates one large task: 'Analyze all 10 competitors comprehensively.' The agent produces a shallow analysis that barely scratches the surface of each competitor.",
+    "question": "What decomposition principle was violated, and what is the correct architecture?",
+    "options": {
+      "A": "The agent needs a better system prompt with more specific analysis instructions",
+      "B": "The task was not decomposed — a single agent analyzing 10 companies simultaneously suffers severe attention dilution. The correct architecture decomposes into 10 independent per-competitor analysis tasks (parallelizable), each further decomposed into focused subtasks (research, financials, products, SWOT), with a final synthesis agent that compares all 10 analyses",
+      "C": "Use 10 separate agents, one per competitor, with no coordination or synthesis",
+      "D": "Process all 10 competitors sequentially in the same context window"
+    },
+    "correctAnswer": "B",
+    "explanation": "The single monolithic task violates the decomposition principle. Ten competitors × four analysis dimensions = 40 concerns for one agent, guaranteeing shallow results. The correct architecture uses hierarchical decomposition: 10 per-competitor tasks (independent, parallelizable), each decomposed into 4 focused subtasks, then a synthesis step that compares findings. Option A can't overcome attention dilution with better prompting. Option C produces isolated analyses with no competitive comparison — missing the point. Option D would still suffer from accumulated context and attention dilution.",
+    "examTrap": "Option C gets the decomposition right (separate per-competitor) but misses the synthesis step — competitive analysis requires comparison, which needs a final agent to combine all findings.",
+    "conceptsTested": ["task decomposition", "attention dilution", "hierarchical decomposition", "parallel processing", "synthesis"]
+  },
+  {
+    "id": "d1-q27",
+    "domain": 1,
+    "taskStatement": "1.7",
+    "difficulty": "foundation",
+    "scenario": "A developer builds a long-running research agent that helps users over multiple sessions. The user starts a research session on Monday, gathers preliminary findings, and returns on Wednesday to continue. The developer stores the full conversation history from Monday and prepends it to Wednesday's session.",
+    "question": "What problem will this approach cause as the research project extends over weeks?",
+    "options": {
+      "A": "The conversation history will exceed the context window, and even before that, the stale context problem means early conversation turns contain outdated findings, superseded hypotheses, and abandoned directions that confuse the model and dilute attention from current work",
+      "B": "There is no problem — full history preserves all context perfectly",
+      "C": "The only issue is API cost from the extra tokens",
+      "D": "The model will ignore old messages automatically"
+    },
+    "correctAnswer": "A",
+    "explanation": "The stale context problem is critical for long-running agents. Over weeks, early findings may be invalidated, hypotheses abandoned, and directions changed. Prepending the full history forces the model to process all of this outdated information, wasting tokens and — more dangerously — potentially causing the model to reference outdated conclusions. The model has no way to distinguish current findings from stale ones in a flat conversation history. Option B ignores context degradation. Option C underestimates the impact beyond cost. Option D is incorrect — models attend to all context.",
+    "examTrap": "Option D is tempting because intuitively, newer information should 'override' older information — but LLMs attend to all context and may surface outdated findings alongside current ones, creating contradictory outputs.",
+    "conceptsTested": ["stale context problem", "session state management", "long-running agents", "context window"]
+  },
+  {
+    "id": "d1-q28",
+    "domain": 1,
+    "taskStatement": "1.7",
+    "difficulty": "intermediate",
+    "scenario": "A developer's agent needs to handle a user returning to continue a task from yesterday. The agent was analyzing a codebase and had identified 15 bugs across 8 files, fixed 7, and had notes on the remaining 8. The developer considers three resumption strategies: (A) Resume with the full previous conversation. (B) Fork the session from the point where the user left off. (C) Start a fresh session with a structured summary of completed work: files analyzed, bugs found, bugs fixed, remaining bugs with their file locations and descriptions.",
+    "question": "Which resumption strategy is best for this scenario?",
+    "options": {
+      "A": "Strategy A — full history preserves all context and reasoning",
+      "B": "Strategy B — fork_session preserves the exact state without any information loss",
+      "C": "Strategy C — a fresh start with a structured summary gives the model clean context focused on the remaining work, avoids stale context from completed fixes, and uses tokens efficiently",
+      "D": "Strategy A but with the completed fix conversations removed"
+    },
+    "correctAnswer": "C",
+    "explanation": "A fresh session with a structured summary is optimal here. The agent doesn't need to re-read the reasoning behind the 7 completed fixes — it needs to know they're done and focus on the remaining 8 bugs. A structured summary (file paths, bug descriptions, fix status) provides all necessary context in a compact form. Strategy A wastes tokens on completed work. Strategy B preserves stale context about already-fixed bugs. Strategy D requires complex conversation surgery that may lose important context.",
+    "examTrap": "Strategy B (fork_session) sounds ideal because 'preserving exact state' sounds good — but for continuation of partially-complete work, the 'exact state' includes all the completed work's reasoning that's no longer relevant.",
+    "conceptsTested": ["session resumption", "fresh start with summary", "stale context avoidance", "structured context"]
+  },
+  {
+    "id": "d1-q29",
+    "domain": 1,
+    "taskStatement": "1.7",
+    "difficulty": "advanced",
+    "scenario": "An agent system manages a complex project with multiple workstreams. Workstream A involves frontend development, Workstream B handles backend APIs, and Workstream C covers database migrations. A coordinator agent needs to spawn a subagent that continues work on Workstream B, which was started in a previous session. The previous Workstream B session identified 5 API endpoints to build, completed 2, and documented the remaining 3 with their specs.",
+    "question": "What session state strategy should the coordinator use when spawning the Workstream B subagent?",
+    "options": {
+      "A": "Use fork_session to branch from the previous Workstream B session, preserving all API design decisions and context",
+      "B": "Start a fresh subagent session and pass only: (1) a project-level context summary, (2) the Workstream B status report listing completed and remaining endpoints with specs, and (3) any cross-workstream dependencies from Workstreams A and C that affect the API design",
+      "C": "Pass the full conversation histories from all three workstreams to give complete project context",
+      "D": "Just tell the subagent 'continue building the API endpoints from where we left off'"
+    },
+    "correctAnswer": "B",
+    "explanation": "The optimal strategy provides curated, relevant context without stale or irrelevant information. The subagent needs: project context (architecture decisions), its own workstream status (what's done, what's remaining with specs), and cross-workstream dependencies (e.g., frontend expects certain response formats). It does NOT need Workstream A's React component discussions or Workstream C's migration scripts. Option A preserves stale context from completed endpoints. Option C overwhelms with irrelevant workstream details. Option D provides insufficient context for the subagent to continue effectively.",
+    "examTrap": "Option A seems correct because fork_session preserves valuable API design decisions — but those decisions should be captured in the structured status report (Option B), not preserved as raw conversation history with all the trial-and-error noise.",
+    "conceptsTested": ["session state management", "fork_session vs fresh start", "cross-workstream context", "curated context passing"]
+  },
+  {
+    "id": "d1-q30",
+    "domain": 1,
+    "taskStatement": "1.7",
+    "difficulty": "intermediate",
+    "scenario": "A developer uses fork_session to create a branched copy of an active agent session. The original session is analyzing a production outage. The developer forks the session to explore a risky 'what-if' hypothesis (testing whether a specific database rollback would fix the issue) without contaminating the original investigation.",
+    "question": "What is fork_session's primary value in this scenario?",
+    "options": {
+      "A": "It saves API costs by reusing the existing context",
+      "B": "It allows exploring a risky hypothesis in an isolated branch while preserving the original investigation's state intact — if the hypothesis is wrong, the original session continues unaffected",
+      "C": "It creates a backup of the conversation in case of errors",
+      "D": "It speeds up the investigation by running both branches simultaneously"
+    },
+    "correctAnswer": "B",
+    "explanation": "fork_session creates an isolated branch of the conversation. The forked session inherits all context up to the fork point but diverges afterward. This is ideal for exploring risky hypotheses: the developer can test the database rollback idea in the fork without adding potentially misleading analysis to the main investigation. If the hypothesis is wrong, the original session is clean. Option A is incorrect — forking doesn't reduce costs; it may increase them. Option C mischaracterizes forking as backup. Option D is a secondary benefit, not the primary value.",
+    "examTrap": "Option D (parallelism) is a real benefit of fork_session, but the PRIMARY value in this incident response scenario is isolation — protecting the main investigation from hypothesis contamination. Speed is secondary to correctness during outage analysis.",
+    "conceptsTested": ["fork_session", "session branching", "hypothesis isolation", "investigation integrity"]
+  }
+]
