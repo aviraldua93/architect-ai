@@ -259,8 +259,8 @@ function presentQuestion(q: Question, index: number, total: number): void {
   // Header with progress
   console.log('');
   console.log(`  ${c.dim(`Question ${index + 1} of ${total}`)}  ${progressBar(index + 1, total, 24)}`);
-  const domainLabel = DOMAIN_NAMES[q.domain] || q.domainName || 'Unknown';
-  const taskLabel = TASK_STATEMENT_NAMES[q.taskStatement] || q.taskStatementName || 'Unknown';
+  const domainLabel = DOMAIN_NAMES[q.domain] ?? 'Unknown';
+  const taskLabel = TASK_STATEMENT_NAMES[q.taskStatement] ?? 'Unknown';
   console.log(`  ${c.dim(`Domain ${q.domain}: ${domainLabel}`)}  ${c.dim('•')}  ${c.dim(`Task ${q.taskStatement}: ${taskLabel}`)}`);
   console.log(`  ${c.dim('Difficulty:')} ${difficultyBadge(q.difficulty)}`);
 
@@ -291,7 +291,7 @@ function presentQuestion(q: Question, index: number, total: number): void {
 function difficultyBadge(d: string): string {
   switch (d) {
     case 'easy':
-    case 'foundation':  return c.green('● Foundation');
+    case 'foundation':   return c.green('● Foundation');
     case 'medium':
     case 'intermediate': return c.yellow('●● Intermediate');
     case 'hard':
@@ -334,7 +334,7 @@ function displayResults(records: AnswerRecord[]): void {
   const domainScores = new Map<number, { correct: number; total: number; name: string }>();
   for (const r of records) {
     const d = r.question.domain;
-    const entry = domainScores.get(d) || { correct: 0, total: 0, name: DOMAIN_NAMES[d] || r.question.domainName || 'Unknown' };
+    const entry = domainScores.get(d) || { correct: 0, total: 0, name: DOMAIN_NAMES[d] ?? 'Unknown' };
     entry.total++;
     if (r.correct) entry.correct++;
     domainScores.set(d, entry);
@@ -351,7 +351,7 @@ function displayResults(records: AnswerRecord[]): void {
   const taskScores = new Map<string, { correct: number; total: number; name: string }>();
   for (const r of records) {
     const ts = r.question.taskStatement;
-    const entry = taskScores.get(ts) || { correct: 0, total: 0, name: TASK_STATEMENT_NAMES[ts] || r.question.taskStatementName || 'Unknown' };
+    const entry = taskScores.get(ts) || { correct: 0, total: 0, name: TASK_STATEMENT_NAMES[ts] ?? 'Unknown' };
     entry.total++;
     if (r.correct) entry.correct++;
     taskScores.set(ts, entry);
