@@ -1,0 +1,41 @@
+{
+  "name": "architect-ai",
+  "version": "0.1.0.0",
+  "description": "AI-powered study tool for Claude Certified Architect exam. The codebase IS the curriculum.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/ --ext .ts,.tsx",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
+    "test:tier1": "npm run lint && npm run type-check",
+    "test:tier2": "echo 'TODO: Implement tier2 E2E tests'",
+    "test:tier3": "echo 'TODO: Implement tier3 LLM-as-judge evaluation'",
+    "test": "npm run test:tier1"
+  },
+  "keywords": [
+    "ai",
+    "education",
+    "certification",
+    "aws",
+    "claude",
+    "agent",
+    "study-tool"
+  ],
+  "author": "Fatima Al-Rashid",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "prettier": "^3.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  }
+}

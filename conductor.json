@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.claude.ai/workspace-hooks.json",
+  "workspace": {
+    "name": "architect-ai",
+    "description": "AI-powered study tool for Claude Certified Architect exam",
+    "hooks": [
+      {
+        "id": "pre-commit",
+        "event": "git.pre-commit",
+        "command": "npm run test:tier1"
+      },
+      {
+        "id": "build-ts",
+        "event": "editor.save",
+        "glob": "src/**/*.ts",
+        "command": "npm run build"
+      }
+    ]
+  },
+  "patterns": {
+    "gstack": {
+      "description": "gstack conductor pattern for workspace orchestration",
+      "enabled": true
+    }
+  }
+}
