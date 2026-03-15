@@ -5,7 +5,7 @@ AI-powered study tool for Claude Certified Architect exam. **The codebase IS the
 ## Project Overview
 
 architect-ai is an intelligent study platform that combines:
-- **Agentic Architecture**: Multi-agent systems orchestration for teaching AWS concepts
+- **Agentic Architecture**: Multi-agent systems orchestration for teaching Claude Certified Architect exam concepts
 - **Tool Design & MCP Integration**: Extensible tool framework with Model Context Protocol support
 - **CLI & Commands**: Interactive learning interface
 - **Prompt Engineering**: Dynamic, contextual learning prompts
