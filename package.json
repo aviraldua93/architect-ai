@@ -9,20 +9,15 @@
     "architect-ai": "./src/cli/index.ts"
   },
   "scripts": {
-    "start": "bun run src/cli/index.ts",
-    "quiz": "bun run src/cli/index.ts quiz",
-    "study": "bun run src/cli/index.ts study",
-    "assess": "bun run src/cli/index.ts assess",
-    "dev": "bun --watch run src/cli/index.ts",
+    "start": "tsx src/cli/index.ts",
+    "quiz": "tsx src/cli/index.ts quiz",
+    "study": "tsx src/cli/index.ts study",
+    "assess": "tsx src/cli/index.ts assess",
+    "dev": "tsx --watch src/cli/index.ts",
     "build": "tsc",
-    "type-check": "tsc --noEmit",
-    "lint": "eslint src/ --ext .ts,.tsx",
-    "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
-    "test:tier1": "npx vitest run test/tier1/",
-    "test:tier2": "echo 'TODO: Implement tier2 E2E tests'",
-    "test:tier3": "echo 'TODO: Implement tier3 LLM-as-judge evaluation'",
-    "test": "npx vitest run test/tier1/",
-    "test:lint": "npm run lint && npm run type-check"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test test/tier1/",
+    "lint": "tsc --noEmit"
   },
   "keywords": [
     "ai",
@@ -41,6 +36,7 @@
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
     "prettier": "^3.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.0"
   },
