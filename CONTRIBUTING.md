@@ -20,9 +20,9 @@ All branches must use a category prefix with a forward slash:
 
 1. **Branch** — Create a branch from `main` using the naming convention above.
 2. **Commit** — Make your changes. All commits must be authored as:
-   ``
+   ```
    Aviral Dua <aviraldua9@gmail.com>
-   ``
+   ```
 3. **Push** — Push your branch to `origin`.
 4. **Open a PR** — Target `main`. Fill in the PR template with a clear description.
 5. **Review** — At least one other team member must approve the PR.
@@ -38,7 +38,7 @@ All branches must use a category prefix with a forward slash:
 
 ### Commands
 
-``bash
+```bash
 # Install dependencies
 bun install
 
@@ -52,7 +52,7 @@ bun test test/tier1/
 bun run start          # Show help
 bun run quiz           # Quick practice quiz
 bun run quiz -- -d 1   # Quiz filtered to Domain 1
-``
+```
 
 ### What CI Runs
 
@@ -76,7 +76,7 @@ Use **British English** throughout the codebase:
 
 All exported functions, classes, and interfaces must have JSDoc comments. Use the `@exam` tag to link code to exam domains:
 
-``typescript
+```typescript
 /**
  * Run a complete agentic loop.
  *
@@ -93,7 +93,7 @@ export async function runAgenticLoop(
 ): Promise<AgenticLoopResult> {
   // ...
 }
-``
+```
 
 ### TypeScript
 
@@ -120,7 +120,7 @@ export async function runAgenticLoop(
 
 All question banks live in `src/content/questions/` as JSON files. Each question must conform to the Zod schema in `schema.ts`:
 
-``json
+```json
 {
   "id": "d2-q001",
   "domain": 2,
@@ -138,7 +138,7 @@ All question banks live in `src/content/questions/` as JSON files. Each question
   "rationale": "Tool descriptions are the primary mechanism for selection...",
   "tags": ["tool-descriptions", "misrouting"]
 }
-``
+```
 
 ### ID Convention
 
