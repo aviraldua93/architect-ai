@@ -150,8 +150,13 @@ export function createThresholdGuardHook(
       const amount = input[amountField];
 
       if (typeof amount !== "number") {
-        // Can't validate non-numeric amounts — allow through.
-        return { allowed: true };
+        // Fix RT-005: Reject non-numeric amounts — attacker could pass string "99999" to bypass.
+        return {
+          allowed: false,
+          reason:
+            `Amount field "${amountField}" is not a number (got ${typeof amount}) for tool "${toolName}". ` +
+            `Non-numeric amounts are rejected for safety.`,
+        };
       }
 
       if (amount <= threshold) {

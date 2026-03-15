@@ -189,6 +189,25 @@ export class Coordinator {
       messages: [{ role: "user", content: userQuery }],
     });
 
+    // Fix LLM-P1-2: Check stop_reason during decomposition.
+    // If Claude returns "end_turn" without using the decompose_task tool,
+    // it chose not to decompose — treat the whole query as a single task.
+    if (response.stop_reason === "end_turn") {
+      const hasDecomposeTool = response.content.some(
+        (block): block is ToolUseBlock => block.type === "tool_use" && block.name === "decompose_task",
+      );
+      if (!hasDecomposeTool) {
+        return [
+          {
+            subagentName: [...this.subagents.keys()][0] ?? "default",
+            instruction: userQuery,
+            context: { facts: [] },
+            priority: 0,
+          },
+        ];
+      }
+    }
+
     // Extract the decompose_task tool call from the response.
     const toolUse = response.content.find(
       (block): block is ToolUseBlock => block.type === "tool_use" && block.name === "decompose_task",

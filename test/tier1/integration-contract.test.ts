@@ -76,22 +76,22 @@ describe('CLI ↔ Content Integration Contract', () => {
 
   // ── types/ and quiz.ts mappings must be in sync ──────────────
   describe('Domain mapping consistency (types/ vs quiz.ts)', () => {
-    it('quiz.ts contains every domain name from types/', () => {
-      for (const [key, value] of Object.entries(DOMAIN_NAMES)) {
-        expect(
-          quizSource,
-          `Domain ${key} ("${value}") missing from quiz.ts DOMAIN_NAMES`,
-        ).toContain(value as string);
-      }
+    it('quiz.ts imports DOMAIN_NAMES from shared types', () => {
+      expect(quizSource).toContain("from '../types'");
+      expect(quizSource).toContain('DOMAIN_NAMES');
     });
 
-    it('quiz.ts contains every task statement name from types/', () => {
-      for (const [key, value] of Object.entries(TASK_STATEMENT_NAMES)) {
-        expect(
-          quizSource,
-          `Task ${key} ("${value}") missing from quiz.ts TASK_STATEMENT_NAMES`,
-        ).toContain(value as string);
-      }
+    it('quiz.ts imports TASK_STATEMENT_NAMES from shared types', () => {
+      expect(quizSource).toContain("from '../types'");
+      expect(quizSource).toContain('TASK_STATEMENT_NAMES');
+    });
+
+    it('quiz.ts does NOT define its own DOMAIN_NAMES const', () => {
+      expect(quizSource).not.toContain('const DOMAIN_NAMES');
+    });
+
+    it('quiz.ts does NOT define its own TASK_STATEMENT_NAMES const', () => {
+      expect(quizSource).not.toContain('const TASK_STATEMENT_NAMES');
     });
   });
 

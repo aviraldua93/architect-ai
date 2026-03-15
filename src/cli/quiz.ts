@@ -8,38 +8,21 @@
  */
 
 import * as readline from 'readline';
-import { readdir, readFile } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { getQuestions } from '../content/questions';
+import type { Question, QuizOptions } from '../types';
+import {
+  DOMAIN_NAMES,
+  TASK_STATEMENT_NAMES,
+  normalizeDifficulty,
+} from '../types';
 import {
   c, colours, banner, box, progressBar, scoreBar,
   sectionHeader, divider, gap, wrapText, kvLine,
 } from './formatter';
 
-// ── Types ──────────────────────────────────────────────────────
-
-export interface Question {
-  id: string;
-  domain: number;
-  domainName?: string;
-  taskStatement: string;
-  taskStatementName?: string;
-  difficulty: 'easy' | 'medium' | 'hard' | 'foundation' | 'intermediate' | 'advanced';
-  scenario: string;
-  question: string;
-  options: { A: string; B: string; C: string; D: string };
-  correctAnswer: 'A' | 'B' | 'C' | 'D';
-  explanation: string;
-  tags?: string[];
-  examTrap?: string;
-  conceptsTested?: string[];
-}
-
-export interface QuizOptions {
-  domain?: number;
-  taskStatement?: string;
-  count?: number;
-}
+// Re-export types used by other modules (e.g. tests, CLI index)
+export type { Question, QuizOptions };
+export { loadQuestions, filterQuestions };
 
 interface AnswerRecord {
   question: Question;
@@ -47,173 +30,43 @@ interface AnswerRecord {
   correct: boolean;
 }
 
-// ── Domain metadata ────────────────────────────────────────────
+// ── Question Loading ───────────────────────────────────────────────────────
 
-const DOMAIN_NAMES: Record<number, string> = {
-  1: 'Agentic Architecture',
-  2: 'Tool Design & MCP',
-  3: 'CLI & Commands',
-  4: 'Prompt Engineering',
-  5: 'Context Management',
-};
-
-const TASK_STATEMENT_NAMES: Record<string, string> = {
-  '1.1': 'Agentic Loops',
-  '1.2': 'Multi-Agent Orchestration',
-  '1.3': 'Subagent Invocation',
-  '1.4': 'Workflow Enforcement',
-  '1.5': 'Agent SDK Hooks',
-  '1.6': 'Task Decomposition',
-  '1.7': 'Session State',
-  '2.1': 'Design Tool Interfaces',
-  '2.2': 'MCP Protocol',
-  '3.1': 'Command Design',
-  '4.1': 'Prompt Templates',
-  '4.2': 'Chain-of-Thought Prompting',
-  '5.1': 'Optimise Context Windows',
-};
-
-
-// ── Question Loading ───────────────────────────────────────────
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const QUESTIONS_DIR = join(__dirname, '..', 'content', 'questions');
-
-/** Load questions from JSON files in the content directory */
-async function loadQuestionsFromFiles(): Promise<Question[]> {
+/**
+ * Load all available questions via the content loader.
+ * Falls back to a single inline question if the content layer fails.
+ */
+async function loadQuestions(): Promise<Question[]> {
   try {
-    const files = await readdir(QUESTIONS_DIR);
-    const jsonFiles = files.filter(f => f.endsWith('.json'));
-
-    if (jsonFiles.length === 0) return [];
-
-    const allQuestions: Question[] = [];
-    for (const file of jsonFiles) {
-      const raw = await readFile(join(QUESTIONS_DIR, file), 'utf-8');
-      const parsed = JSON.parse(raw);
-      const questions = Array.isArray(parsed) ? parsed : [parsed];
-      allQuestions.push(...questions);
-    }
-    return allQuestions;
+    const questions = getQuestions();
+    if (questions.length > 0) return questions;
   } catch {
-    return [];
+    // Content loader failed — fall back gracefully.
   }
-}
-
-/** Inline fallback questions in case the content directory is empty */
-function fallbackQuestions(): Question[] {
   return [
     {
-      id: 'fb-001',
-      domain: 1,
-      domainName: 'Agentic Architecture',
-      taskStatement: '1.1',
-      taskStatementName: 'Design Agentic Loops',
-      difficulty: 'medium',
-      scenario: 'You are building a research agent that must gather information from multiple sources, synthesise findings, and produce a report. The number of sources varies per query.',
+      id: 'fb-001', domain: 1, taskStatement: '1.1', difficulty: 'intermediate',
+      scenario: 'You are building a research agent that must gather information from multiple sources.',
       question: 'Which loop pattern allows the agent to adaptively decide when it has gathered enough information?',
       options: {
         A: 'A fixed for-loop iterating over a predefined list of sources',
-        B: 'A while-loop with a satisfaction check after each source, capped at a maximum iteration count',
+        B: 'A while-loop with a satisfaction check, capped at a maximum iteration count',
         C: 'A single LLM call with all sources concatenated into the prompt',
         D: 'A recursive function with no base case that keeps searching indefinitely',
       },
       correctAnswer: 'B',
-      explanation: 'A while-loop with a satisfaction check lets the agent stop early when it has enough information, whilst the iteration cap prevents runaway costs. Fixed loops are inflexible, single calls miss the adaptive element, and unbounded recursion is dangerous.',
-      tags: ['agentic-loop', 'adaptive', 'exit-conditions'],
-    },
-    {
-      id: 'fb-002',
-      domain: 2,
-      domainName: 'Tool Design & MCP',
-      taskStatement: '2.2',
-      taskStatementName: 'MCP Protocol',
-      difficulty: 'medium',
-      scenario: 'Your organisation wants to expose internal databases as tools that Claude can use. Multiple teams own different databases and want to publish tools independently.',
-      question: 'What is the primary benefit of using the Model Context Protocol (MCP) for this use case?',
-      options: {
-        A: 'MCP encrypts all database queries automatically',
-        B: 'MCP provides a standardised interface for tool discovery and invocation, enabling independent tool publishing',
-        C: 'MCP replaces the need for database authentication entirely',
-        D: 'MCP compresses database responses to fit within token limits',
-      },
-      correctAnswer: 'B',
-      explanation: 'MCP\'s core value is standardisation — it defines a protocol for tool discovery, schema declaration, and invocation. This lets each team publish tools independently with consistent interfaces. It does not handle encryption, authentication, or compression natively.',
-      tags: ['MCP', 'tool-discovery', 'standardisation'],
-    },
-    {
-      id: 'fb-003',
-      domain: 3,
-      domainName: 'CLI & Commands',
-      taskStatement: '3.1',
-      taskStatementName: 'Command Design',
-      difficulty: 'easy',
-      scenario: 'You are designing a CLI for a developer tool. Users need to perform CRUD operations on projects, each with several sub-commands and flags.',
-      question: 'Which CLI design pattern provides the best user experience for a tool with nested sub-commands?',
-      options: {
-        A: 'A flat command structure where every operation is a top-level command with long flag names',
-        B: 'A hierarchical command structure with noun-verb grouping (e.g., project create, project list)',
-        C: 'A single interactive REPL that handles all operations through a menu system',
-        D: 'Positional arguments only, with no named flags or sub-commands',
-      },
-      correctAnswer: 'B',
-      explanation: 'Hierarchical noun-verb commands (like git remote add or docker container ls) are the industry standard for complex CLIs. They provide discoverability, tab-completion support, and logical grouping. Flat structures become unwieldy, REPLs are poor for scripting, and positional-only args are error-prone.',
-      tags: ['CLI', 'command-design', 'user-experience'],
-    },
-    {
-      id: 'fb-004',
-      domain: 4,
-      domainName: 'Prompt Engineering',
-      taskStatement: '4.1',
-      taskStatementName: 'Prompt Templates',
-      difficulty: 'easy',
-      scenario: 'Your team maintains 50+ prompt templates for different use cases. Templates frequently need updates as model behaviour changes between versions. Multiple team members edit templates simultaneously.',
-      question: 'Which approach to prompt template management reduces maintenance burden and merge conflicts?',
-      options: {
-        A: 'Hardcode all prompts directly in application source code as string constants',
-        B: 'Store templates as versioned, parameterised files with clear variable placeholders and a changelog',
-        C: 'Generate all prompts dynamically at runtime using another LLM',
-        D: 'Maintain a single monolithic prompt file containing all templates concatenated together',
-      },
-      correctAnswer: 'B',
-      explanation: 'Versioned, parameterised template files enable independent updates, clear change tracking, and reduced merge conflicts. Hardcoded strings couple prompts to code. LLM-generated prompts are unpredictable. Monolithic files create constant merge conflicts with 50+ templates.',
-      tags: ['prompt-templates', 'versioning', 'maintenance'],
-    },
-    {
-      id: 'fb-005',
-      domain: 5,
-      domainName: 'Context Management',
-      taskStatement: '5.1',
-      taskStatementName: 'Optimise Context Windows',
-      difficulty: 'medium',
-      scenario: 'Your chatbot maintains a conversation history that grows with each turn. After 30+ turns, the context window is nearly full and the model starts losing track of early conversation details.',
-      question: 'Which context management strategy preserves important early information whilst staying within token limits?',
-      options: {
-        A: 'Truncate the oldest messages to make room, always keeping only the most recent turns',
-        B: 'Use a sliding window with periodic summarisation — compress older turns into summaries whilst keeping recent turns verbatim',
-        C: 'Start a new conversation every 10 turns and lose all previous context',
-        D: 'Double the model\'s max_tokens parameter to fit everything',
-      },
-      correctAnswer: 'B',
-      explanation: 'Sliding window with summarisation is the gold standard for long conversations. It preserves the gist of earlier turns through compressed summaries whilst maintaining full detail for recent context. Simple truncation loses important early context. Restarting loses everything. You cannot arbitrarily increase context window size.',
-      tags: ['context-window', 'summarisation', 'sliding-window'],
+      explanation: 'A while-loop with a satisfaction check lets the agent stop early, whilst the cap prevents runaway costs.',
+      examTrap: 'Option D seems adaptive but unbounded loops are an anti-pattern.',
+      conceptsTested: ['agentic-loop', 'exit-conditions'],
     },
   ];
-}
-
-/** Load all available questions, falling back to inline samples */
-export async function loadQuestions(): Promise<Question[]> {
-  const fromFiles = await loadQuestionsFromFiles();
-  if (fromFiles.length > 0) return fromFiles;
-  return fallbackQuestions();
 }
 
 
 // ── Filtering & Shuffling ──────────────────────────────────────
 
 /** Filter questions by domain and/or task statement */
-export function filterQuestions(questions: Question[], opts: QuizOptions): Question[] {
+function filterQuestions(questions: Question[], opts: QuizOptions): Question[] {
   let filtered = [...questions];
 
   if (opts.taskStatement) {
@@ -289,12 +142,10 @@ function presentQuestion(q: Question, index: number, total: number): void {
 }
 
 function difficultyBadge(d: string): string {
-  switch (d) {
-    case 'easy':
+  const norm = normalizeDifficulty(d);
+  switch (norm) {
     case 'foundation':   return c.green('● Foundation');
-    case 'medium':
     case 'intermediate': return c.yellow('●● Intermediate');
-    case 'hard':
     case 'advanced':     return c.red('●●● Advanced');
     default:             return c.dim(d);
   }
