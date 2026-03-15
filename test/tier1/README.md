@@ -1,27 +1,27 @@
-# Tier 1: Free Static Analysis
+# Tier 1: Static Validation
 
-## Overview
-Free static analysis testing including:
-- ESLint for code quality
-- TypeScript type checking
-- Prettier formatting validation
+**Cost:** Free — no API keys, no network access.
+**Speed:** Under 5 seconds.
+**When to use:** On every commit. Runs in CI and locally.
+
+## What This Tier Tests
+
+Tier 1 catches structural and syntactic issues without executing any code against Claude:
+
+- **TypeScript type checking** — strict mode enabled, catches type errors at compile time.
+- **ESLint** — code quality rules and best practices.
+- **Prettier** — consistent formatting across the codebase.
+- **Question schema validation** — ensures all JSON question banks conform to the Zod schema in `src/content/questions/schema.ts`.
 
 ## Commands
+
 ```bash
-npm run test:tier1
-npm run lint
-npm run type-check
-npm run format
+bun run test:tier1    # Run all Tier 1 checks
+bun run type-check    # TypeScript compiler only
+bun run lint          # ESLint only
+bun run format        # Prettier only
 ```
 
-## What's Tested
-- Code style and best practices (ESLint)
-- Type safety (TypeScript compiler)
-- Code formatting (Prettier)
-- No runtime execution required
+## Why Three Tiers?
 
-## TODO
-- [ ] Configure ESLint rules
-- [ ] Set up TypeScript strict mode
-- [ ] Add Prettier configuration
-- [ ] Create pre-commit hooks
+Static analysis is the foundation of the testing pyramid. It catches the cheapest-to-fix errors (typos, type mismatches, schema violations) before any money is spent on API calls in Tier 2 or Tier 3.

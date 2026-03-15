@@ -1,97 +1,80 @@
-# Quick Start Guide - architect-ai
+# Quick Start — ArchitectAI
 
-## Setup Instructions
+Get up and running in under 5 minutes.
 
-### 1. GitHub CLI Authentication (IN PROGRESS)
-A device code authentication flow is currently active.
+## Prerequisites
 
-**Device Code:** `7D5A-A315`
+- [Bun](https://bun.sh/) (recommended) or Node.js 18+
+- Git
 
-**Steps to complete authentication:**
-1. Open browser to: https://github.com/login/device
-2. Enter the device code: `7D5A-A315`
-3. Follow the GitHub login flow
-4. Grant permission when prompted
-5. The `gh auth login` process will automatically detect completion and continue
+## Setup
 
-### 2. Install Dependencies (After Auth)
-Once auth is complete, run:
 ```bash
-npm install
+# Clone the repository
+git clone https://github.com/aviraldua93/architect-ai.git
+cd architect-ai
+
+# Install dependencies
+bun install        # or: npm install
+
+# Build TypeScript
+bun run build      # or: npm run build
+
+# Verify everything works
+bun run test:tier1
 ```
 
-### 3. Build the Project
+## Environment (optional)
+
+Only needed for Tier 3 (live agent sessions):
+
 ```bash
-npm run build
+cp .env.example .env
+# Add your ANTHROPIC_API_KEY to .env
 ```
 
-### 4. Run Tests
+## Start Learning
+
 ```bash
-npm run test
+# Tier 1: Offline study — no API key needed
+bun run quiz              # Quick practice questions
+bun run quiz -- -d 1      # Filter to Domain 1
+bun run study             # Interactive study session
+
+# Tier 2: MCP server — plug into Claude Desktop or Copilot
+bun run mcp
+
+# Tier 3: Live agents — requires ANTHROPIC_API_KEY
+bun run agent
 ```
 
-## Project Domains
+## Project Layout
 
-The codebase is organized into 5 learning domains:
+| Directory | Exam Domain | Weight |
+|-----------|-------------|--------|
+| `src/agents/` | Domain 1: Agentic Architecture | 27% |
+| `src/tools/`, `src/mcp/` | Domain 2: Tool Design & MCP | 18% |
+| `src/cli/`, `.claude/` | Domain 3: Claude Code Config | 20% |
+| `src/prompts/` | Domain 4: Prompt Engineering | 20% |
+| `src/context/` | Domain 5: Context & Reliability | 15% |
+| `src/content/` | Pre-generated study material | — |
 
-1. **Agentic Architecture** (`src/agents/`) - Multi-agent patterns and orchestration
-2. **Tool Design & MCP** (`src/tools/`, `src/mcp/`) - Tool abstraction and Model Context Protocol
-3. **CLI & Commands** (`src/cli/`) - Command-line interface design
-4. **Prompt Engineering** (`src/prompts/`) - Prompt optimization and templating
-5. **Context Management** (`src/context/`) - Token and context window optimization
+## Useful Commands
 
-Plus **Content** (`src/content/`) with question banks, explanations, and scenarios.
-
-## Testing Strategy
-
-Three-tier testing approach:
-
-- **Tier 1** (Free): Static analysis - linting, type-checking, formatting
-- **Tier 2** (Paid): E2E integration tests - workflow and component testing
-- **Tier 3** (LLM): Advanced evaluation - Claude as a judge for curriculum quality
+```bash
+bun run build         # Compile TypeScript
+bun run dev           # TypeScript watch mode
+bun run lint          # ESLint
+bun run format        # Prettier
+bun run type-check    # TypeScript strict checking
+bun run test:tier1    # Free static validation (<5s)
+bun run test:tier2    # E2E tests (~$3-4/run, needs API key)
+bun run test:tier3    # LLM-as-judge (~$0.15/run, needs API key)
+```
 
 ## Next Steps
 
-1. ✅ Complete GitHub CLI authentication (see above)
-2. Run `npm install` to install dependencies
-3. Run `npm run build` to compile TypeScript
-4. Explore the domain structure under `src/`
-5. Read CLAUDE.md for full project documentation
-6. Check TODOS.md for the project backlog
-
-## Environment Setup
-
-Copy `.env.example` to `.env` and fill in any required values:
-```bash
-cp .env.example .env
-# Edit .env with your settings
-```
-
-## Troubleshooting
-
-### GitHub CLI authentication stuck?
-- Check that the device code `7D5A-A315` was correctly entered in the browser
-- The browser session must complete before the local process continues
-- If stuck for >10 minutes, stop the process and run `gh auth login` again
-
-### TypeScript errors?
-```bash
-npm run type-check
-```
-
-### Code style issues?
-```bash
-npm run lint
-npm run format
-```
-
-## Architecture Documents
-
-- **CLAUDE.md** - Project configuration and overview
-- **CHANGELOG.md** - Version history
-- **TODOS.md** - Project backlog and upcoming work
-- **docs/** - Detailed architecture documentation (to be completed)
-
----
-
-**Project Lead:** Fatima Al-Rashid, DevOps & CI Engineer at ArchitectAI
+1. Read [`CLAUDE.md`](CLAUDE.md) for the full project architecture.
+2. Explore the `src/` directories — each has a README mapping to exam domains.
+3. Check [`TODOS.md`](TODOS.md) for the project backlog.
+4. See [`docs/QA_STRATEGY.md`](docs/QA_STRATEGY.md) for the testing philosophy.

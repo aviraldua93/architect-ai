@@ -1,19 +1,21 @@
 # Documentation
 
-## Overview
-Architecture and contributor documentation for architect-ai.
+Architecture and quality documentation for ArchitectAI.
 
-## Files to Create
-- `ARCHITECTURE.md` - System design and patterns
-- `API.md` - API documentation
-- `CONTRIBUTING.md` - Contributor guide
-- `DEVELOPMENT.md` - Development setup and workflow
+## Contents
 
-## TODO
-- [ ] Document system architecture
-- [ ] Write API reference
-- [ ] Create contributor guide
-- [ ] Write development setup guide
-- [ ] Add architectural decision records (ADRs)
-- [ ] Document design patterns
-- [ ] Create troubleshooting guide
+| Document | Description |
+|----------|-------------|
+| [`QA_STRATEGY.md`](QA_STRATEGY.md) | Quality Bible v1.0 — the 3-tier test strategy, ownership model, and quality gates for the project. |
+
+## Project-Level Docs
+
+These live at the repository root:
+
+| Document | Description |
+|----------|-------------|
+| [`README.md`](../README.md) | Project overview, exam coverage map, quick start guide, and project structure. |
+| [`CLAUDE.md`](../CLAUDE.md) | Claude Code project configuration — domains, architecture, and coding conventions. |
+| [`QUICKSTART.md`](../QUICKSTART.md) | Setup instructions for new contributors. |
+| [`CHANGELOG.md`](../CHANGELOG.md) | Release history. |
+| [`TODOS.md`](../TODOS.md) | Project backlog with epics and tasks. |

@@ -1,24 +1,26 @@
-# Domain 1: Agentic Architecture
+# Domain 1: Agentic Architecture (27%)
 
-## Overview
-Teaches multi-agent patterns, orchestration, and communication protocols.
+Implements the highest-weighted domain on the Claude Certified Architect (Foundations) exam. Every file in this directory demonstrates a production pattern for building multi-agent systems with the Anthropic SDK.
 
-## Key Concepts
-- Agent base classes and lifecycle
-- Multi-agent communication patterns
-- Orchestration and coordination
-- State management
-- Error recovery and resilience
+## Files
 
-## TODO
-- [ ] Implement Agent base class
-- [ ] Design communication protocol
-- [ ] Create orchestration layer
-- [ ] Implement state machine
-- [ ] Add error recovery patterns
+| File | Exam Task | What It Demonstrates |
+|------|-----------|---------------------|
+| `loop.ts` | 1.1 — Agentic Loops | The core `while (stop_reason === "tool_use")` loop, tool execution, and conversation accumulation. |
+| `coordinator.ts` | 1.2 — Multi-Agent Orchestration | Hub-and-spoke topology: a central coordinator decomposes tasks, routes to specialists, and aggregates results. |
+| `spawner.ts` | 1.3 — Subagent Invocation | Isolated-context subagent spawning with parallel execution via `Promise.all`. |
+| `hooks.ts` | 1.5 — Agent SDK Hooks | Deterministic `PostToolUse` guardrails vs probabilistic prompt-based guidance. |
+| `types.ts` | Domain 1 (shared) | TypeScript interfaces for agents, hooks, tool results, and coordinator orchestration. Re-exports Anthropic SDK types. |
 
-## Files to Create
-- `agent.ts` - Base Agent class
-- `types.ts` - Agent interfaces
-- `orchestrator.ts` - Multi-agent orchestration
-- `registry.ts` - Agent registry
+## Exam Concepts Demonstrated
+
+- **1.1 Agentic Loops** — `loop.ts` implements the full loop lifecycle: send → inspect `stop_reason` → execute tools → append `tool_result` → repeat.
+- **1.2 Multi-Agent Orchestration** — `coordinator.ts` shows hub-and-spoke routing where subagents never communicate directly.
+- **1.3 Subagent Invocation** — `spawner.ts` demonstrates isolated context passing and parallel subagent execution.
+- **1.5 SDK Hooks** — `hooks.ts` contrasts deterministic hooks (100% reliability) with probabilistic prompts (~95%).
+
+## Connections
+
+- **`src/tools/`** — Agents invoke tools; tool interfaces defined there are consumed here.
+- **`src/cli/`** — The CLI dispatches user commands that ultimately trigger agent workflows.
+- **`src/context/`** — Context window management feeds into how agents manage conversation history.

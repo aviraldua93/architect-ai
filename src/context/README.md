@@ -1,25 +1,28 @@
-# Domain 5: Context Management
+# Domain 5: Context & Reliability (15%)
 
-## Overview
-Teaches context window optimization, token counting, and prioritization strategies.
+Covers Domain 5 of the Claude Certified Architect (Foundations) exam — context window optimisation, escalation patterns, error propagation, and human review integration.
 
-## Key Concepts
-- Context window management
-- Token counting and tracking
-- Context prioritization
-- Serialization and versioning
-- Memory strategies
+## Files
 
-## TODO
-- [ ] Implement token counter
-- [ ] Create context window manager
-- [ ] Build prioritization engine
-- [ ] Implement serialization
-- [ ] Add memory strategies
+No `.ts` files have been implemented yet. This directory is on the roadmap after Domains 1–4.
 
-## Files to Create
-- `types.ts` - Context types
-- `tokenizer.ts` - Token counter
-- `manager.ts` - Context manager
-- `prioritizer.ts` - Priority engine
-- `serializer.ts` - Context serialization
+**Planned implementations:**
+- Token counting and context budget allocation (Task 5.1)
+- Context preservation strategies across multi-turn conversations (Task 5.2)
+- Escalation patterns: when to hand off to a human (Task 5.3)
+- Error propagation and structured failure reporting (Task 5.4)
+- Codebase exploration strategies for large repositories (Task 5.5)
+
+## Exam Concepts
+
+- **5.1 Context Preservation** — Strategies for maintaining relevant context as conversations grow beyond the window.
+- **5.2 Escalation Patterns** — Knowing when the agent should stop and escalate to human review.
+- **5.3 Error Propagation** — Structured error reporting that lets callers (agents or humans) make informed decisions.
+- **5.4 Codebase Exploration** — Systematic strategies for navigating large codebases within context limits.
+- **5.5 Provenance & Traceability** — Tracking where information came from for auditability.
+
+## Connections
+
+- **`src/agents/`** — Context management is critical for long-running agentic loops that accumulate conversation history.
+- **`src/prompts/`** — Prompt length directly competes with context budget; the two must be co-optimised.
+- **`src/cli/`** — The CLI's `assess` command evaluates readiness, which requires tracking study context across sessions.

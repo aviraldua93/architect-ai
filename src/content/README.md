@@ -1,43 +1,47 @@
-# Content: Pre-Generated Curriculum
+# Content: Pre-Generated Study Material
 
-## Overview
-Contains pre-loaded content for the AI study platform:
-- Question banks for AWS certification
-- Detailed explanations of concepts
-- Practice scenarios and case studies
+Pre-loaded curriculum for the **Claude Certified Architect (Foundations)** exam. This content powers Tier 1 (offline CLI) and Tier 2 (MCP server) — no API key required.
 
 ## Subdirectories
 
-### questions/
-AWS certification question banks in JSON format.
+### `questions/`
 
-**Schema:**
+Scenario-based question banks in JSON format, validated against a Zod schema.
+
+| File | Description |
+|------|-------------|
+| `schema.ts` | Zod schema defining the question format: `id`, `domain`, `taskStatement`, `difficulty` (foundation/intermediate/advanced), `scenario`, `question`, `options` (A–D), `correctAnswer`, `rationale`, and `tags`. |
+| `index.ts` | Loader module. Reads all JSON question banks, validates against the schema, and exports a typed `Question[]` array with optional domain/difficulty filtering. |
+| `domain-1-agentic-architecture.json` | Domain 1 question bank — agentic loops, orchestration, subagent invocation, hooks. |
+| `sample-questions.json` | Sample questions used during development and testing. |
+
+### `explanations/`
+
+Concept deep-dives in Markdown format with code examples. Currently empty — content to be added per domain.
+
+### `scenarios/`
+
+Exam-realistic practice scenarios combining multiple domains. Currently empty — scenarios to be added.
+
+## Question Schema
+
 ```json
 {
-  "id": "q-001",
-  "domain": "Domain 1",
-  "difficulty": "easy|medium|hard",
-  "question": "Question text here...",
-  "options": ["A", "B", "C", "D"],
-  "correct": "A",
-  "rationale": "Explanation of correct answer...",
-  "tags": ["agent", "orchestration"]
+  "id": "d1-q001",
+  "domain": 1,
+  "taskStatement": "1.1",
+  "difficulty": "foundation",
+  "scenario": "You are building a CLI agent that...",
+  "question": "What should you check to determine if the agent should continue looping?",
+  "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
+  "correctAnswer": "B",
+  "rationale": "The stop_reason field indicates whether...",
+  "tags": ["agentic-loop", "stop_reason"]
 }
 ```
 
-### explanations/
-Detailed concept explanations and tutorials.
+## Connections
 
-**Format:** Markdown files with code examples
-
-### scenarios/
-Practical learning scenarios and case studies.
-
-**Format:** Markdown with interactive components
-
-## TODO
-- [ ] Load initial AWS question bank
-- [ ] Create 50+ explanations
-- [ ] Design 10+ practice scenarios
-- [ ] Implement spaced repetition algorithm
-- [ ] Add difficulty progression
+- **`src/cli/`** — The `quiz` command loads questions from this directory and presents them interactively.
+- **`src/mcp/`** — MCP resources will serve this content to external clients (Claude Desktop, Copilot).
+- **`test/tier1/`** — Schema validation tests ensure all question files conform to the Zod schema.

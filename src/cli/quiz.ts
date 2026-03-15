@@ -21,16 +21,18 @@ import {
 export interface Question {
   id: string;
   domain: number;
-  domainName: string;
+  domainName?: string;
   taskStatement: string;
-  taskStatementName: string;
-  difficulty: 'easy' | 'medium' | 'hard';
+  taskStatementName?: string;
+  difficulty: 'easy' | 'medium' | 'hard' | 'foundation' | 'intermediate' | 'advanced';
   scenario: string;
   question: string;
   options: { A: string; B: string; C: string; D: string };
   correctAnswer: 'A' | 'B' | 'C' | 'D';
   explanation: string;
-  tags: string[];
+  tags?: string[];
+  examTrap?: string;
+  conceptsTested?: string[];
 }
 
 export interface QuizOptions {
@@ -53,6 +55,22 @@ const DOMAIN_NAMES: Record<number, string> = {
   3: 'CLI & Commands',
   4: 'Prompt Engineering',
   5: 'Context Management',
+};
+
+const TASK_STATEMENT_NAMES: Record<string, string> = {
+  '1.1': 'Agentic Loops',
+  '1.2': 'Multi-Agent Orchestration',
+  '1.3': 'Subagent Invocation',
+  '1.4': 'Workflow Enforcement',
+  '1.5': 'Agent SDK Hooks',
+  '1.6': 'Task Decomposition',
+  '1.7': 'Session State',
+  '2.1': 'Design Tool Interfaces',
+  '2.2': 'MCP Protocol',
+  '3.1': 'Command Design',
+  '4.1': 'Prompt Templates',
+  '4.2': 'Chain-of-Thought Prompting',
+  '5.1': 'Optimise Context Windows',
 };
 
 
@@ -241,7 +259,9 @@ function presentQuestion(q: Question, index: number, total: number): void {
   // Header with progress
   console.log('');
   console.log(`  ${c.dim(`Question ${index + 1} of ${total}`)}  ${progressBar(index + 1, total, 24)}`);
-  console.log(`  ${c.dim(`Domain ${q.domain}: ${q.domainName}`)}  ${c.dim('•')}  ${c.dim(`Task ${q.taskStatement}: ${q.taskStatementName}`)}`);
+  const domainLabel = DOMAIN_NAMES[q.domain] || q.domainName || 'Unknown';
+  const taskLabel = TASK_STATEMENT_NAMES[q.taskStatement] || q.taskStatementName || 'Unknown';
+  console.log(`  ${c.dim(`Domain ${q.domain}: ${domainLabel}`)}  ${c.dim('•')}  ${c.dim(`Task ${q.taskStatement}: ${taskLabel}`)}`);
   console.log(`  ${c.dim('Difficulty:')} ${difficultyBadge(q.difficulty)}`);
 
   // Scenario box
@@ -270,10 +290,13 @@ function presentQuestion(q: Question, index: number, total: number): void {
 
 function difficultyBadge(d: string): string {
   switch (d) {
-    case 'easy':   return c.green('● Easy');
-    case 'medium': return c.yellow('●● Medium');
-    case 'hard':   return c.red('●●● Hard');
-    default:       return c.dim(d);
+    case 'easy':
+    case 'foundation':  return c.green('● Foundation');
+    case 'medium':
+    case 'intermediate': return c.yellow('●● Intermediate');
+    case 'hard':
+    case 'advanced':     return c.red('●●● Advanced');
+    default:             return c.dim(d);
   }
 }
 
@@ -311,7 +334,7 @@ function displayResults(records: AnswerRecord[]): void {
   const domainScores = new Map<number, { correct: number; total: number; name: string }>();
   for (const r of records) {
     const d = r.question.domain;
-    const entry = domainScores.get(d) || { correct: 0, total: 0, name: r.question.domainName };
+    const entry = domainScores.get(d) || { correct: 0, total: 0, name: DOMAIN_NAMES[d] || r.question.domainName || 'Unknown' };
     entry.total++;
     if (r.correct) entry.correct++;
     domainScores.set(d, entry);
@@ -328,7 +351,7 @@ function displayResults(records: AnswerRecord[]): void {
   const taskScores = new Map<string, { correct: number; total: number; name: string }>();
   for (const r of records) {
     const ts = r.question.taskStatement;
-    const entry = taskScores.get(ts) || { correct: 0, total: 0, name: r.question.taskStatementName };
+    const entry = taskScores.get(ts) || { correct: 0, total: 0, name: TASK_STATEMENT_NAMES[ts] || r.question.taskStatementName || 'Unknown' };
     entry.total++;
     if (r.correct) entry.correct++;
     taskScores.set(ts, entry);
