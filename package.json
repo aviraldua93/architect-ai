@@ -18,10 +18,11 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint src/ --ext .ts,.tsx",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
-    "test:tier1": "npm run lint && npm run type-check",
+    "test:tier1": "npx vitest run test/tier1/",
     "test:tier2": "echo 'TODO: Implement tier2 E2E tests'",
     "test:tier3": "echo 'TODO: Implement tier3 LLM-as-judge evaluation'",
-    "test": "npm run test:tier1"
+    "test": "npx vitest run test/tier1/",
+    "test:lint": "npm run lint && npm run type-check"
   },
   "keywords": [
     "ai",
@@ -40,7 +41,8 @@
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
     "prettier": "^3.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
