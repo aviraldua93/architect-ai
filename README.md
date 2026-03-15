@@ -17,26 +17,46 @@ You don't just *read* about agentic loops — you see a production implementatio
 
 ## Three Ways to Learn
 
-```
-┌─────────────────┬──────────────────┬───────────────────────────┐
-│   TIER 1        │    TIER 2        │    TIER 3                 │
-│   Static CLI    │    MCP Server    │    Live Agents            │
-│   (No API Key)  │    (No API Key)  │    (BYOK)                 │
-├─────────────────┼──────────────────┼───────────────────────────┤
-│ Pre-generated   │ Plugs into your  │ Full multi-agent          │
-│ question banks, │ existing Claude  │ orchestration with        │
-│ explanations,   │ Desktop, GitHub  │ adaptive study sessions,  │
-│ mock exams.     │ Copilot, or any  │ Socratic dialogue, and    │
-│                 │ MCP client.      │ weakness detection.       │
-│ Works offline.  │                  │                           │
-│ Works on a      │ OUR server       │ You provide your own      │
-│ plane.          │ provides content │ Claude API key.           │
-│                 │ + tools.         │                           │
-│ ZERO COST.      │ YOUR AI provides │ ~$0.02-0.05 per session.  │
-│                 │ intelligence.    │                           │
-│                 │ ZERO COST.       │ FULL POWER.               │
-└─────────────────┴──────────────────┴───────────────────────────┘
-```
+<table>
+<tr>
+<td align="center" width="33%">
+
+### 🖥️ Tier 1 — Static CLI
+**No API Key Required**
+
+Pre-generated question banks, explanations, and mock exams.
+
+Works offline. Works on a plane.
+
+**ZERO COST.**
+
+</td>
+<td align="center" width="33%">
+
+### 🔌 Tier 2 — MCP Server
+**No API Key Required**
+
+Plugs into your existing Claude Desktop, GitHub Copilot, or any MCP client.
+
+Our server provides content + tools. Your AI provides intelligence.
+
+**ZERO COST.**
+
+</td>
+<td align="center" width="34%">
+
+### 🤖 Tier 3 — Live Agents
+**Bring Your Own Key**
+
+Full multi-agent orchestration with adaptive study sessions, Socratic dialogue, and weakness detection.
+
+You provide your own Claude API key.
+
+**~$0.02–0.05 per session. FULL POWER.**
+
+</td>
+</tr>
+</table>
 
 ## Exam Coverage
 
