@@ -17,6 +17,10 @@ const __dirname = dirname(__filename);
 /** Known domain question files — add new domains here. */
 const DOMAIN_FILES = [
   'domain-1-agentic-architecture.json',
+  'domain-2-tool-design.json',
+  // Domain 3 (CLI & Commands) will be added when its question bank is ready.
+  'domain-4-prompt-engineering.json',
+  'domain-5-context.json',
 ] as const;
 
 let cachedQuestions: Question[] | null = null;

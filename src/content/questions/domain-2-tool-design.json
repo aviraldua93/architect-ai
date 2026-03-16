@@ -1,0 +1,442 @@
+[
+  {
+    "id": "d2-q01",
+    "domain": 2,
+    "taskStatement": "2.1",
+    "difficulty": "foundation",
+    "scenario": "A developer registers three tools with the Claude API: get_weather, search_flights, and book_hotel. When the user asks \"What is the forecast for Seattle tomorrow?\", Claude correctly selects get_weather. The developer wonders how Claude decided which tool to call.",
+    "question": "What is the primary mechanism Claude uses to decide which tool to invoke?",
+    "options": {
+      "A": "Claude matches keywords in the user message to tool names using string similarity",
+      "B": "Claude reads the tool description and parameter schemas to determine which tool best satisfies the user intent",
+      "C": "Claude calls every registered tool in parallel and returns the first successful result",
+      "D": "Claude uses an internal routing table that maps predefined intents to tool names"
+    },
+    "correctAnswer": "B",
+    "explanation": "Claude selects tools based on their descriptions and parameter schemas provided in the tools array. Well-written descriptions are the primary selection mechanism. Option A is wrong because Claude does semantic understanding, not keyword matching. Option C is wrong because Claude does not invoke all tools speculatively. Option D is wrong because there is no hardcoded routing table; selection is driven entirely by the tool metadata you provide.",
+    "examTrap": "Option A seems plausible because tool names often contain relevant words, but Claude uses the full description semantically, not simple string matching.",
+    "conceptsTested": [
+      "tool description quality",
+      "tool selection mechanism",
+      "Claude API tool use"
+    ]
+  },
+  {
+    "id": "d2-q02",
+    "domain": 2,
+    "taskStatement": "2.1",
+    "difficulty": "intermediate",
+    "scenario": "An agentic system exposes 15 tools to Claude. Two tools overlap: analyze_sentiment (description: \"Analyze the emotional tone of text\") and classify_text (description: \"Classify text into categories\"). When users ask \"Is this review positive or negative?\", Claude sometimes picks classify_text instead of analyze_sentiment, causing incorrect results.",
+    "question": "What is the best way to fix Claude consistently selecting the wrong tool?",
+    "options": {
+      "A": "Rename classify_text to something unrelated like process_data to reduce confusion",
+      "B": "Rewrite both tool descriptions to be more specific and non-overlapping, e.g. classify_text should say \"Classify text into predefined topic categories such as sports, politics, technology\" while analyze_sentiment says \"Determine positive, negative, or neutral emotional tone\"",
+      "C": "Add a system prompt that says \"Never use classify_text for sentiment questions\"",
+      "D": "Remove classify_text entirely so there is only one option"
+    },
+    "correctAnswer": "B",
+    "explanation": "Tool descriptions are the primary selection signal. Making descriptions specific and non-overlapping ensures Claude can distinguish between tools reliably. Option A only obscures the name but the vague description would still confuse. Option C uses negative instructions which are fragile and do not scale. Option D removes functionality rather than fixing the real problem of ambiguous descriptions.",
+    "examTrap": "Option C seems like a quick fix, but negative instructions (\"never do X\") are unreliable. Clear, positive descriptions are the robust solution.",
+    "conceptsTested": [
+      "tool description specificity",
+      "disambiguation between tools",
+      "avoiding negative instructions"
+    ]
+  },
+  {
+    "id": "d2-q03",
+    "domain": 2,
+    "taskStatement": "2.1",
+    "difficulty": "advanced",
+    "scenario": "A financial services company builds an agentic workflow with 40+ tools. They notice that as the tool count grows, Claude occasionally selects suboptimal tools or hallucinates tool names. Response latency also increases. The architect must decide how to scale the tool design.",
+    "question": "What architectural pattern best addresses tool selection degradation at scale?",
+    "options": {
+      "A": "Increase the max_tokens parameter so Claude has more room to reason about tool selection",
+      "B": "Implement a tool routing layer that uses a cheaper model or embeddings to pre-filter the tool set to a relevant subset before passing to Claude, reducing the cognitive load",
+      "C": "Concatenate all tool descriptions into the system prompt as plain text instead of using the tools parameter",
+      "D": "Switch to sequential tool execution where Claude can only use one tool per turn"
+    },
+    "correctAnswer": "B",
+    "explanation": "A pre-filtering or routing layer reduces the number of tools Claude must evaluate, improving selection accuracy and latency. This is a standard pattern for scaling agentic systems. Option A does not help because the problem is tool disambiguation, not output length. Option C loses structured schema information and makes selection worse. Option D cripples multi-step workflows and does not fix the core selection problem.",
+    "examTrap": "Option C seems like it gives Claude more context, but moving tool definitions out of the structured tools parameter removes the schema-based matching that Claude relies on.",
+    "conceptsTested": [
+      "tool scaling patterns",
+      "routing layers",
+      "agentic architecture at scale"
+    ]
+  },
+  {
+    "id": "d2-q04",
+    "domain": 2,
+    "taskStatement": "2.1",
+    "difficulty": "foundation",
+    "scenario": "A developer defines a tool with name \"getUser\" and description \"Gets a user.\" The tool accepts a user_id parameter. When Claude is asked to find information about a user by email address, it incorrectly passes the email in the user_id field. The developer wants to improve the tool definition.",
+    "question": "What change would most improve Claude's ability to use this tool correctly?",
+    "options": {
+      "A": "Change the tool name from getUser to getUserById to hint at the expected parameter",
+      "B": "Expand the description to \"Retrieve user profile information by their unique numeric user ID. Do not use this tool for email-based lookups\" and add a description to the user_id parameter specifying it must be a numeric ID",
+      "C": "Add input validation that rejects non-numeric values and returns an error",
+      "D": "Create a wrapper function that converts emails to user IDs automatically"
+    },
+    "correctAnswer": "B",
+    "explanation": "Detailed tool and parameter descriptions are the primary way Claude understands how to use tools correctly. Specifying what the tool does, what inputs it expects, and what it should NOT be used for guides Claude to correct usage. Option A helps slightly but a name alone is insufficient. Option C handles errors after the mistake rather than preventing it. Option D hides the real API contract and can cause unexpected behavior.",
+    "examTrap": "Option A improves the name but descriptions carry far more weight than names in Claude's tool selection and parameter mapping.",
+    "conceptsTested": [
+      "parameter descriptions",
+      "tool documentation quality",
+      "preventing misuse through descriptions"
+    ]
+  },
+  {
+    "id": "d2-q05",
+    "domain": 2,
+    "taskStatement": "2.2",
+    "difficulty": "foundation",
+    "scenario": "A developer builds a tool that queries an external database. When the database is unreachable, the tool throws a Python exception. Claude receives the exception traceback as the tool result and tells the user \"An internal error occurred\" without attempting recovery or providing useful information.",
+    "question": "What is the recommended way to handle tool errors in the Claude API?",
+    "options": {
+      "A": "Let exceptions propagate naturally so Claude can read the stack trace and debug the issue",
+      "B": "Return a structured tool_result with is_error set to true and a clear error message describing what went wrong, so Claude can reason about the failure and respond appropriately",
+      "C": "Catch all exceptions and return an empty successful response to avoid confusing Claude",
+      "D": "Retry the tool call automatically three times before surfacing any error to Claude"
+    },
+    "correctAnswer": "B",
+    "explanation": "The Claude API supports is_error: true in tool results, which signals to Claude that the tool call failed. This lets Claude reason about the error and decide whether to retry, use an alternative, or inform the user gracefully. Option A exposes implementation details and wastes tokens. Option C hides failures and leads to hallucinated results. Option D may help transiently but Claude still needs to know if all retries fail.",
+    "examTrap": "Option A seems reasonable for debugging, but raw stack traces waste context tokens and do not help Claude make good decisions about error recovery.",
+    "conceptsTested": [
+      "is_error flag",
+      "structured error responses",
+      "tool result format"
+    ]
+  },
+  {
+    "id": "d2-q06",
+    "domain": 2,
+    "taskStatement": "2.2",
+    "difficulty": "intermediate",
+    "scenario": "An agentic system has a search_documents tool that can fail in multiple ways: invalid query syntax, no results found, or rate limit exceeded. Currently all failures return the same generic error message. The developer wants Claude to handle each failure mode differently: fix syntax errors, broaden searches with no results, and wait before retrying rate limits.",
+    "question": "How should the tool communicate different failure modes to Claude?",
+    "options": {
+      "A": "Use different HTTP status codes (400, 404, 429) in the tool response",
+      "B": "Return structured error messages with is_error: true that include the error type and actionable context, such as error_type, retry_after_seconds, and a descriptive message",
+      "C": "Add all error handling logic to the system prompt so Claude knows what to do for each error code",
+      "D": "Create separate tools for each failure mode: handle_syntax_error, handle_no_results, handle_rate_limit"
+    },
+    "correctAnswer": "B",
+    "explanation": "Returning structured, descriptive error content with is_error: true gives Claude the information it needs to take the right corrective action. Including error type and actionable details enables nuanced error handling. Option A is wrong because tool results do not use HTTP status codes in the Claude API tool_result schema. Option C is fragile and does not scale. Option D creates unnecessary tool sprawl for what are error conditions, not distinct operations.",
+    "examTrap": "Option A might seem natural for web developers, but the Claude API tool_result uses is_error: true with content, not HTTP status codes.",
+    "conceptsTested": [
+      "structured error content",
+      "is_error with metadata",
+      "error-specific recovery"
+    ]
+  },
+  {
+    "id": "d2-q07",
+    "domain": 2,
+    "taskStatement": "2.2",
+    "difficulty": "advanced",
+    "scenario": "A multi-step agentic pipeline has Claude orchestrating five tools in sequence: validate_input, fetch_data, transform_data, run_analysis, and generate_report. When transform_data fails with is_error: true, Claude retries the same call repeatedly until hitting the token limit, never trying an alternative approach.",
+    "question": "How should the developer prevent Claude from retrying failed tools indefinitely?",
+    "options": {
+      "A": "Set max_tokens to a low value to force Claude to stop before too many retries",
+      "B": "Include retry guidance in the error message itself and track retry counts in the orchestration layer to enforce hard limits",
+      "C": "Remove the is_error flag so Claude does not realize the call failed and moves on",
+      "D": "Add a system prompt rule that says \"Never retry any tool more than once\""
+    },
+    "correctAnswer": "B",
+    "explanation": "Combining actionable error messages with orchestration-layer retry limits gives robust control. The error message guides Claude toward alternatives, while the retry counter provides a hard stop. Option A is a blunt instrument that may cut off useful work. Option C hides errors and leads to incorrect downstream results. Option D is too rigid and does not account for transient failures that legitimately benefit from a single retry.",
+    "examTrap": "Option D sounds like a clean rule, but some errors are transient (network timeouts) and deserve one retry. A blanket rule loses this nuance.",
+    "conceptsTested": [
+      "retry limiting",
+      "actionable error messages",
+      "orchestration-layer controls"
+    ]
+  },
+  {
+    "id": "d2-q08",
+    "domain": 2,
+    "taskStatement": "2.2",
+    "difficulty": "intermediate",
+    "scenario": "A developer is building a tool that reads files from disk. If the file does not exist, they want Claude to know the file was not found. They are deciding between returning a normal result with text \"File not found\" versus using the is_error mechanism in the tool result.",
+    "question": "What is the key difference between returning an error message as normal content versus using is_error: true?",
+    "options": {
+      "A": "There is no functional difference; both approaches work identically in practice",
+      "B": "Using is_error: true signals to Claude that the tool invocation failed, which influences how Claude weights the result in its reasoning and may trigger different behavior like retrying or explaining the failure to the user",
+      "C": "is_error: true causes the API to return an HTTP 500 error to the calling application",
+      "D": "Normal content with error text is preferred because is_error: true causes Claude to halt all further processing"
+    },
+    "correctAnswer": "B",
+    "explanation": "The is_error flag semantically marks the tool result as a failure, which changes how Claude interprets and responds to it. Claude treats error results differently from successful results in its reasoning. Option A is wrong because the flag genuinely affects Claude's behavior. Option C is wrong because is_error is part of the message content, not the HTTP layer. Option D is wrong because Claude does not halt; it reasons about the error and decides next steps.",
+    "examTrap": "Option A is tempting because both approaches technically return text, but the semantic signal of is_error changes Claude's internal handling of the result.",
+    "conceptsTested": [
+      "is_error semantics",
+      "error signaling vs error text",
+      "tool result interpretation"
+    ]
+  },
+  {
+    "id": "d2-q09",
+    "domain": 2,
+    "taskStatement": "2.3",
+    "difficulty": "foundation",
+    "scenario": "A developer wants Claude to always use a specific get_stock_price tool when responding to any user message in their financial assistant, regardless of what the user says. They do not want Claude to respond with plain text without calling the tool.",
+    "question": "Which tool_choice configuration forces Claude to always call a specific tool?",
+    "options": {
+      "A": "tool_choice: {\"type\": \"auto\"}",
+      "B": "tool_choice: {\"type\": \"any\"}",
+      "C": "tool_choice: {\"type\": \"tool\", \"name\": \"get_stock_price\"}",
+      "D": "tool_choice: {\"type\": \"required\", \"tool\": \"get_stock_price\"}"
+    },
+    "correctAnswer": "C",
+    "explanation": "Setting tool_choice to type \"tool\" with a specific name forces Claude to call that exact tool on every turn. Option A (auto) lets Claude decide whether to use any tool or respond with text. Option B (any) forces Claude to use some tool but not a specific one. Option D uses an incorrect schema format that does not exist in the Claude API.",
+    "examTrap": "Option B (any) is easily confused with forcing a specific tool. The word \"any\" means Claude must call a tool but gets to choose which one.",
+    "conceptsTested": [
+      "tool_choice specific mode",
+      "forced tool invocation",
+      "tool_choice schema"
+    ]
+  },
+  {
+    "id": "d2-q10",
+    "domain": 2,
+    "taskStatement": "2.3",
+    "difficulty": "intermediate",
+    "scenario": "A developer builds a structured data extraction pipeline. They send Claude a block of unstructured text and want Claude to always return structured JSON via a tool call, never as plain text. However, the developer wants Claude to choose between extract_person, extract_company, and extract_product tools based on the content.",
+    "question": "Which tool_choice setting ensures Claude always calls a tool but retains flexibility on which tool to use?",
+    "options": {
+      "A": "tool_choice: {\"type\": \"auto\"} with a system prompt saying \"Always use a tool\"",
+      "B": "tool_choice: {\"type\": \"any\"}",
+      "C": "tool_choice: {\"type\": \"tool\", \"name\": \"extract_person\"} and rotate the name each request",
+      "D": "Omit tool_choice entirely, which defaults to requiring a tool call"
+    },
+    "correctAnswer": "B",
+    "explanation": "tool_choice \"any\" forces Claude to call one of the provided tools but lets it decide which one is most appropriate. Option A does not guarantee tool use since auto allows text-only responses. Option C forces a single specific tool and rotating defeats the purpose. Option D is wrong because the default behavior is \"auto\", which does not require tool use.",
+    "examTrap": "Option A seems workable since system prompts are usually followed, but \"auto\" mode technically allows Claude to respond without a tool call regardless of the prompt.",
+    "conceptsTested": [
+      "tool_choice any mode",
+      "forced tool use",
+      "structured output extraction"
+    ]
+  },
+  {
+    "id": "d2-q11",
+    "domain": 2,
+    "taskStatement": "2.3",
+    "difficulty": "advanced",
+    "scenario": "An architect designs an agentic loop where Claude should use tools when needed but must also be able to send final text responses to the user. In the current implementation, tool_choice is set to \"any\", which forces a tool call on every turn. When Claude wants to deliver the final answer, it invokes a dummy \"respond\" tool instead of returning text directly.",
+    "question": "What is the correct approach to let Claude both use tools and return final text responses?",
+    "options": {
+      "A": "Keep tool_choice as \"any\" and define a respond tool, which is a clean design pattern",
+      "B": "Use tool_choice: {\"type\": \"auto\"} so Claude can decide each turn whether to call a tool or respond with text, which is the standard agentic loop pattern",
+      "C": "Alternate tool_choice between \"any\" and \"none\" on each turn",
+      "D": "Set tool_choice to \"any\" and parse the tool output to detect when Claude is trying to send a final response"
+    },
+    "correctAnswer": "B",
+    "explanation": "The auto mode is designed for agentic loops where Claude needs the flexibility to either use tools or respond directly. It naturally handles both tool-calling turns and final-answer turns. Option A works but adds unnecessary complexity with a dummy tool. Option C is fragile and requires the orchestrator to predict Claude's intent. Option D is a brittle workaround that fights the API design.",
+    "examTrap": "Option A (respond tool pattern) actually works and some teams use it, but it adds unnecessary overhead. Auto mode gives Claude native flexibility to choose between tool use and text.",
+    "conceptsTested": [
+      "auto mode in agentic loops",
+      "tool vs text response flexibility",
+      "agentic loop design"
+    ]
+  },
+  {
+    "id": "d2-q12",
+    "domain": 2,
+    "taskStatement": "2.3",
+    "difficulty": "foundation",
+    "scenario": "A developer uses tool_choice with type \"tool\" and name \"generate_sql\" to force Claude to always output SQL via the generate_sql tool. They notice that Claude sometimes generates a tool call with empty or nonsensical SQL when the user message is completely unrelated to databases, like asking Claude to tell a joke.",
+    "question": "Why does Claude produce low-quality tool calls when forced to use a specific tool for off-topic messages?",
+    "options": {
+      "A": "The tool definition has a bug that causes Claude to produce empty results",
+      "B": "When tool_choice forces a specific tool, Claude must call it regardless of relevance, so it produces the best output it can even when the user intent does not match the tool's purpose",
+      "C": "Claude is rate-limited and returns placeholder responses under high load",
+      "D": "The max_tokens setting is too low for Claude to generate proper SQL"
+    },
+    "correctAnswer": "B",
+    "explanation": "Forcing a specific tool via tool_choice means Claude will call it no matter what the user says. If the user input is irrelevant to the tool, Claude is compelled to produce something, resulting in low-quality or nonsensical output. Option A blames the tool definition when the issue is the forced selection. Option C is unrelated to the behavior pattern. Option D does not explain why output is nonsensical rather than truncated.",
+    "examTrap": "Developers often assume forced tool_choice guarantees quality output, but it only guarantees the tool is called. Quality depends on the input being relevant to the tool's purpose.",
+    "conceptsTested": [
+      "tool_choice limitations",
+      "forced tool quality degradation",
+      "input relevance to tools"
+    ]
+  },
+  {
+    "id": "d2-q13",
+    "domain": 2,
+    "taskStatement": "2.4",
+    "difficulty": "foundation",
+    "scenario": "A team is evaluating the Model Context Protocol (MCP) for their Claude-based application. They need to understand what capabilities MCP servers expose. The architect sees references to three primitives: resources, tools, and prompts in the MCP specification.",
+    "question": "What are the three core primitives that an MCP server can expose to a client?",
+    "options": {
+      "A": "Endpoints, schemas, and webhooks for event-driven communication",
+      "B": "Resources (data and content that can be read), tools (functions that can be executed), and prompts (reusable prompt templates)",
+      "C": "Models, datasets, and pipelines for machine learning workflows",
+      "D": "Queries, mutations, and subscriptions similar to GraphQL operations"
+    },
+    "correctAnswer": "B",
+    "explanation": "MCP defines three primitives: resources for exposing readable data and content, tools for executable functions with defined inputs and outputs, and prompts for reusable prompt templates. Option A describes web API concepts, not MCP. Option C describes ML platform concepts. Option D describes GraphQL operation types, which have a different purpose.",
+    "examTrap": "Option D is tempting for developers familiar with GraphQL since MCP also has a client-server architecture, but MCP uses its own primitive model.",
+    "conceptsTested": [
+      "MCP primitives",
+      "resources vs tools vs prompts",
+      "MCP architecture"
+    ]
+  },
+  {
+    "id": "d2-q14",
+    "domain": 2,
+    "taskStatement": "2.4",
+    "difficulty": "intermediate",
+    "scenario": "A startup wants to connect Claude to their Slack workspace, GitHub repositories, and PostgreSQL database. Their engineer starts writing custom MCP servers for each integration from scratch. A senior architect reviews the plan and suggests a different approach to save development time.",
+    "question": "What should the architect recommend before building custom MCP servers?",
+    "options": {
+      "A": "Build all three servers in-house to ensure they meet exact requirements from day one",
+      "B": "Check the MCP community server ecosystem first, since pre-built servers exist for popular services like Slack, GitHub, and PostgreSQL, and only build custom servers for unique needs",
+      "C": "Skip MCP entirely and use direct API integrations which are always more reliable than MCP",
+      "D": "Wait for Anthropic to release official first-party MCP servers for all major platforms"
+    },
+    "correctAnswer": "B",
+    "explanation": "The MCP ecosystem includes community-built servers for many popular services. Checking existing servers before building custom ones saves significant development time. Custom servers should only be built when existing ones do not meet specific requirements. Option A wastes effort rebuilding what already exists. Option C ignores MCP benefits like standardized tool discovery. Option D assumes only Anthropic ships servers, ignoring the open community.",
+    "examTrap": "Option A seems thorough and professional, but reinventing existing community servers is wasteful when the MCP ecosystem encourages reuse.",
+    "conceptsTested": [
+      "community MCP servers",
+      "build vs reuse decision",
+      "MCP ecosystem"
+    ]
+  },
+  {
+    "id": "d2-q15",
+    "domain": 2,
+    "taskStatement": "2.4",
+    "difficulty": "advanced",
+    "scenario": "A company uses Claude Code with three MCP servers: a database server for read-only queries, a deployment server for CI/CD actions, and a monitoring server for log access. The security team wants to ensure that a compromised MCP server cannot escalate privileges beyond its intended scope.",
+    "question": "What security principle should guide MCP server design in this multi-server setup?",
+    "options": {
+      "A": "All MCP servers should share a single service account for simplicity and centralized access control",
+      "B": "Each MCP server should have minimal permissions scoped to its specific function, with the database server having only read access, the deployment server having only CI/CD permissions, and the monitoring server having only log read access",
+      "C": "Security is handled entirely by Claude, which decides what actions are safe to perform",
+      "D": "MCP servers should authenticate using the user session token from the Claude API"
+    },
+    "correctAnswer": "B",
+    "explanation": "Least privilege is the fundamental security principle for MCP servers. Each server should only have permissions necessary for its specific function, limiting blast radius if one is compromised. Option A creates a single point of failure where any compromise exposes all resources. Option C is wrong because LLMs should not be the security boundary. Option D confuses authentication layers; MCP servers authenticate to backends independently.",
+    "examTrap": "Option C sounds reasonable since Claude can be instructed about safety, but LLMs are not reliable security enforcement mechanisms. Security must be enforced at the infrastructure level.",
+    "conceptsTested": [
+      "MCP security",
+      "least privilege",
+      "multi-server isolation"
+    ]
+  },
+  {
+    "id": "d2-q16",
+    "domain": 2,
+    "taskStatement": "2.4",
+    "difficulty": "intermediate",
+    "scenario": "A developer wants to expose their company's internal documentation as context to Claude via MCP. The docs are stored in a Confluence wiki. They debate whether to expose this as an MCP resource or an MCP tool, and need to choose the correct primitive.",
+    "question": "Should the Confluence documentation be exposed as an MCP resource or an MCP tool?",
+    "options": {
+      "A": "As a tool, because Claude needs to execute a function to retrieve the documentation",
+      "B": "As a resource, because documentation is read-only data and content that Claude can reference, and resources are designed for exposing data for context rather than performing actions",
+      "C": "As a prompt, because documentation templates are best represented as prompt primitives",
+      "D": "As both a resource and a tool simultaneously to maximize flexibility and coverage"
+    },
+    "correctAnswer": "B",
+    "explanation": "MCP resources are designed for exposing read-only data and content that provides context. Documentation is a natural fit for resources since it is data to be read, not an action to be performed. Option A mischaracterizes the purpose; tools are for side-effect-producing operations. Option C is wrong because prompts are reusable prompt templates, not documentation storage. Option D adds unnecessary complexity when resources alone are the correct primitive.",
+    "examTrap": "Option A is tempting because fetching docs does require a function call under the hood, but MCP distinguishes between data (resources) and actions (tools) at the semantic level.",
+    "conceptsTested": [
+      "MCP resources vs tools",
+      "read-only data exposure",
+      "MCP primitive selection"
+    ]
+  },
+  {
+    "id": "d2-q17",
+    "domain": 2,
+    "taskStatement": "2.5",
+    "difficulty": "foundation",
+    "scenario": "A developer is building a code review assistant with the Claude API. They need Claude to run a bash command to execute linting on a file. They start writing a custom tool definition for arbitrary shell command execution from scratch.",
+    "question": "What should the developer consider before building a custom shell execution tool?",
+    "options": {
+      "A": "Custom tools are always preferred because they give more control over execution",
+      "B": "Check whether Claude provides a built-in tool for the needed capability, such as the built-in bash tool in Claude Code, before building a custom one",
+      "C": "Shell execution is too dangerous and should never be exposed as a tool under any circumstances",
+      "D": "Build the custom tool but restrict it to only run pre-approved lint commands"
+    },
+    "correctAnswer": "B",
+    "explanation": "Claude Code provides built-in tools like bash execution, file editing, and web search. Developers should check for existing built-in capabilities before building custom tools. Built-in tools are optimized and have proper safety guardrails. Option A ignores that built-in tools are often better tested and integrated. Option C is overly restrictive since sandboxed execution is common. Option D adds unnecessary work when a built-in tool may already exist.",
+    "examTrap": "Option D seems security-conscious, but if Claude Code already has a built-in bash tool with proper sandboxing, restricting a custom tool is redundant effort.",
+    "conceptsTested": [
+      "built-in tools",
+      "build vs reuse decision",
+      "Claude Code capabilities"
+    ]
+  },
+  {
+    "id": "d2-q18",
+    "domain": 2,
+    "taskStatement": "2.5",
+    "difficulty": "intermediate",
+    "scenario": "An architect is designing an agentic system that needs to edit files in a repository. They evaluate two approaches: (1) use the Claude Code built-in text editor tool, or (2) build a custom file editing tool that uses their company's proprietary diff format for all code changes.",
+    "question": "When is it appropriate to build a custom tool instead of using a built-in one?",
+    "options": {
+      "A": "Always build custom tools to avoid dependency on Anthropic's built-in features",
+      "B": "When the built-in tool does not support a specific requirement such as a proprietary format, integration with internal systems, or domain-specific validation that the built-in tool cannot provide",
+      "C": "Never build custom tools; always adapt your workflow to match built-in tool capabilities",
+      "D": "Build custom tools only when the built-in tool has known bugs documented by Anthropic"
+    },
+    "correctAnswer": "B",
+    "explanation": "Custom tools are justified when built-in tools lack specific capabilities needed for the use case, such as proprietary formats or internal system integrations. Option A is unnecessarily hostile to built-in tools that are well-maintained and optimized. Option C is too restrictive and ignores legitimate custom needs. Option D is too narrow; custom tools serve many purposes beyond bug workarounds.",
+    "examTrap": "Option C seems pragmatic (use what is provided) but real-world systems often have requirements that built-in tools simply cannot satisfy.",
+    "conceptsTested": [
+      "custom vs built-in tools",
+      "build decision criteria",
+      "tool architecture"
+    ]
+  },
+  {
+    "id": "d2-q19",
+    "domain": 2,
+    "taskStatement": "2.5",
+    "difficulty": "advanced",
+    "scenario": "A team uses Claude Code for automated code changes. They have both the built-in file editor tool and a custom tool that applies changes via git patches. They notice that Claude sometimes uses the built-in editor when it should use the git patch tool for large multi-file refactors, leading to partial changes.",
+    "question": "How should the team ensure Claude selects the correct tool for each scenario?",
+    "options": {
+      "A": "Disable the built-in editor tool entirely and only use the custom git patch tool",
+      "B": "Write clear, non-overlapping tool descriptions that specify when each tool should be used: the built-in editor for single-file edits and the git patch tool for multi-file refactors, and include usage guidance in the system prompt or CLAUDE.md",
+      "C": "Use tool_choice to force the git patch tool for all operations regardless of scope",
+      "D": "Create a pre-processing step that counts the number of files and removes one tool before each request"
+    },
+    "correctAnswer": "B",
+    "explanation": "Clear tool descriptions that delineate when each tool is appropriate, combined with system prompt guidance, let Claude make intelligent selection decisions. Option A removes a useful tool for simple edits. Option C forces a complex tool even for trivial single-file changes. Option D adds brittle pre-processing when the problem is solvable with better descriptions.",
+    "examTrap": "Option D seems clever (dynamically adjust available tools) but adds unnecessary complexity. Claude can select correctly with good descriptions.",
+    "conceptsTested": [
+      "tool selection guidance",
+      "built-in vs custom coexistence",
+      "description-driven selection"
+    ]
+  },
+  {
+    "id": "d2-q20",
+    "domain": 2,
+    "taskStatement": "2.5",
+    "difficulty": "advanced",
+    "scenario": "A developer notices that Claude Code has a built-in web search tool. Their application also needs to search an internal knowledge base. They consider whether to override the built-in web search with a custom tool or add a separate internal search tool alongside it.",
+    "question": "What is the recommended approach for adding internal search alongside a built-in web search tool?",
+    "options": {
+      "A": "Override the built-in web search tool with a custom tool that searches both the web and the internal knowledge base in a single unified call",
+      "B": "Add a separate search_internal_kb tool with a clear description distinguishing it from web search, so Claude can choose the right search target based on the user query",
+      "C": "Disable web search entirely since internal knowledge is always more relevant for enterprise use",
+      "D": "Combine both search results in a middleware layer before they reach Claude, removing its ability to choose"
+    },
+    "correctAnswer": "B",
+    "explanation": "Adding a separate, well-described tool preserves the built-in web search capability while giving Claude the option to search internal resources. Claude can then choose the appropriate search based on context. Option A couples internal and external search unnecessarily. Option C removes useful web search capability. Option D removes Claude's ability to decide which search is appropriate for the query.",
+    "examTrap": "Option A seems efficient (one tool for all search) but violates the single-responsibility principle and makes it harder for Claude to target specific sources.",
+    "conceptsTested": [
+      "tool composition",
+      "single responsibility principle",
+      "built-in tool augmentation"
+    ]
+  }
+]
