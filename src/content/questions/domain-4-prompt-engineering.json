@@ -1,0 +1,442 @@
+[
+  {
+    "id": "d4-q01",
+    "domain": 4,
+    "taskStatement": "4.1",
+    "difficulty": "foundation",
+    "scenario": "A developer asks Claude to \"write good code\" for a REST API endpoint. The responses vary wildly between requests: sometimes including error handling, sometimes not, sometimes with types, sometimes without. The developer wants consistent, high-quality output.",
+    "question": "What prompt engineering technique most effectively ensures consistent output quality?",
+    "options": {
+      "A": "Add the word \"please\" and \"carefully\" to the prompt for emphasis",
+      "B": "Provide explicit evaluation criteria in the prompt, such as \"The code must include: input validation with Zod, typed error responses, JSDoc comments, and unit test stubs\"",
+      "C": "Increase the temperature parameter to give Claude more creativity in meeting quality standards",
+      "D": "Send the same prompt multiple times and pick the best response manually"
+    },
+    "correctAnswer": "B",
+    "explanation": "Explicit criteria remove ambiguity and give Claude a concrete checklist to follow, producing consistent results. Option A adds politeness but no measurable criteria. Option C increases randomness, which reduces consistency. Option D is wasteful and does not fix the root cause of vague requirements.",
+    "examTrap": "Option D (generate multiple and pick) might seem pragmatic, but it is expensive and does not scale. Explicit criteria solve the problem at the source.",
+    "conceptsTested": [
+      "explicit criteria",
+      "evaluation rubrics",
+      "prompt specificity"
+    ]
+  },
+  {
+    "id": "d4-q02",
+    "domain": 4,
+    "taskStatement": "4.1",
+    "difficulty": "intermediate",
+    "scenario": "A QA team uses Claude to review pull requests. They want Claude to evaluate code against a rubric with five dimensions: correctness, security, performance, readability, and test coverage. Each dimension should be scored 1-5 with specific criteria for each score level.",
+    "question": "How should the rubric be structured in the prompt for best results?",
+    "options": {
+      "A": "Include a brief mention of the five dimensions and let Claude define its own scoring criteria",
+      "B": "Provide the complete rubric as a structured table or list in the system prompt, with explicit descriptions of what constitutes each score level for each dimension, so Claude has unambiguous scoring guidelines",
+      "C": "Train a fine-tuned model on examples of scored reviews instead of using a rubric",
+      "D": "Ask Claude to first generate a rubric, then use it to score the code in a second pass"
+    },
+    "correctAnswer": "B",
+    "explanation": "Embedding the full rubric with explicit score-level descriptions gives Claude a deterministic framework to apply. This produces consistent, reproducible evaluations. Option A leaves too much to interpretation, causing score drift. Option C requires fine-tuning infrastructure and training data that may not exist. Option D adds latency and the generated rubric may not match the team's standards.",
+    "examTrap": "Option D seems thorough (let Claude create and then apply a rubric) but the rubric should reflect the team's specific standards, not Claude's generic preferences.",
+    "conceptsTested": [
+      "evaluation rubrics",
+      "structured scoring criteria",
+      "system prompt design"
+    ]
+  },
+  {
+    "id": "d4-q03",
+    "domain": 4,
+    "taskStatement": "4.1",
+    "difficulty": "advanced",
+    "scenario": "An enterprise deploys Claude to grade customer support ticket responses on empathy, accuracy, and resolution. They find that Claude's scores correlate poorly with human grader scores. Analysis shows Claude gives high empathy scores to responses that are polite but factually wrong, and low scores to terse but accurate responses.",
+    "question": "How should the team improve alignment between Claude's scoring and human grader expectations?",
+    "options": {
+      "A": "Add more dimensions to the rubric to capture nuance, increasing from 3 to 10 dimensions",
+      "B": "Provide calibration examples in the prompt showing specific responses with their expected scores and reasoning, making the implicit scoring standards explicit through concrete examples paired with the rubric",
+      "C": "Lower the temperature to zero so Claude gives deterministic scores",
+      "D": "Replace Claude with a keyword-matching scoring system that counts empathy phrases"
+    },
+    "correctAnswer": "B",
+    "explanation": "Calibration examples ground the rubric in concrete cases, showing Claude exactly what the team considers high-empathy versus low-empathy. This anchors the scoring to human expectations. Option A adds complexity without fixing the misalignment in existing dimensions. Option C affects randomness but not scoring calibration. Option D loses the nuanced understanding that makes LLM-based grading valuable.",
+    "examTrap": "Option C (temperature zero) seems like it would fix inconsistency, but the problem is not randomness; it is misaligned criteria. Zero temperature gives consistently wrong scores.",
+    "conceptsTested": [
+      "calibration examples",
+      "scoring alignment",
+      "rubric grounding"
+    ]
+  },
+  {
+    "id": "d4-q04",
+    "domain": 4,
+    "taskStatement": "4.1",
+    "difficulty": "foundation",
+    "scenario": "A developer prompts Claude with \"Summarize this article.\" The summaries are sometimes too long, sometimes too short, and vary in format. One time Claude returns bullet points, another time a paragraph, and another time a single sentence.",
+    "question": "What is the most effective way to get consistent summary format and length?",
+    "options": {
+      "A": "Add \"do your best\" to encourage Claude to produce optimal output",
+      "B": "Specify explicit criteria: \"Provide a 3-sentence summary in paragraph form. Include the main argument, key evidence, and conclusion. Do not use bullet points.\"",
+      "C": "Set max_tokens to limit the response length, which will control the format",
+      "D": "Use a higher model tier which naturally produces more consistent output"
+    },
+    "correctAnswer": "B",
+    "explanation": "Explicit format and length criteria eliminate ambiguity. Specifying sentence count, format, and content requirements gives Claude a clear target. Option A adds no actionable information. Option C truncates output but does not control format or content quality. Option D does not address the core issue of vague instructions.",
+    "examTrap": "Option C seems like it controls length, but max_tokens truncates mid-response rather than producing a naturally concise summary of the right length.",
+    "conceptsTested": [
+      "output format specification",
+      "explicit criteria",
+      "summary prompting"
+    ]
+  },
+  {
+    "id": "d4-q05",
+    "domain": 4,
+    "taskStatement": "4.2",
+    "difficulty": "intermediate",
+    "scenario": "A developer uses few-shot examples to teach Claude a specific JSON output format for invoice parsing. With 10 examples the output is perfect, but the prompt consumes 80% of the context window, leaving little room for long invoices. With 2 examples, Claude sometimes deviates from the format.",
+    "question": "How should the developer balance few-shot example count against context budget?",
+    "options": {
+      "A": "Always use the maximum number of examples that fit in the context window",
+      "B": "Dynamically adjust the number of few-shot examples based on the input size: use more examples for short inputs and fewer examples for long inputs, ensuring the total prompt stays within context budget while maintaining format fidelity",
+      "C": "Remove all few-shot examples and rely entirely on written instructions",
+      "D": "Split the prompt across multiple API calls, sending examples in one call and the invoice in another"
+    },
+    "correctAnswer": "B",
+    "explanation": "Dynamic example count optimizes the tradeoff between format guidance and input capacity. Short inputs leave room for more examples, while long inputs require fewer. Option A may truncate the actual input data. Option C loses the format grounding that examples provide. Option D breaks context continuity since Claude cannot reference examples from a previous call.",
+    "examTrap": "Option A seems safe (more examples means better output) but it can crowd out the actual input data, which is counterproductive.",
+    "conceptsTested": [
+      "dynamic few-shot count",
+      "context budget management",
+      "example-input tradeoff"
+    ]
+  },
+  {
+    "id": "d4-q06",
+    "domain": 4,
+    "taskStatement": "4.2",
+    "difficulty": "foundation",
+    "scenario": "A developer is building a text classification pipeline that categorizes support tickets into 8 categories. They include one example per category in the prompt. Claude performs well on categories shown in examples but struggles with edge cases between similar categories.",
+    "question": "How can few-shot examples be improved to handle ambiguous classification cases?",
+    "options": {
+      "A": "Include more examples of clear-cut cases to reinforce each category",
+      "B": "Include examples of ambiguous or borderline cases with explanations of why they belong to one category over another, teaching Claude the decision boundaries",
+      "C": "Remove few-shot examples and write longer category descriptions instead",
+      "D": "Add a catch-all \"other\" category for any ambiguous tickets"
+    },
+    "correctAnswer": "B",
+    "explanation": "Borderline examples with reasoning teach Claude the decision boundaries between similar categories, which is where classification errors occur. Option A reinforces what Claude already handles well but does not address edge cases. Option C loses the concrete grounding examples provide. Option D avoids the problem instead of solving it.",
+    "examTrap": "Option A seems thorough (more examples is better) but adding more clear-cut cases does not help Claude distinguish between categories that are genuinely similar.",
+    "conceptsTested": [
+      "few-shot example selection",
+      "boundary cases",
+      "classification prompting"
+    ]
+  },
+  {
+    "id": "d4-q07",
+    "domain": 4,
+    "taskStatement": "4.2",
+    "difficulty": "advanced",
+    "scenario": "An architect builds a multi-tenant system where each tenant has different output format requirements. Tenant A wants XML, tenant B wants JSON, tenant C wants CSV. They store few-shot examples per tenant in a database and inject them dynamically. The context window is 200K tokens.",
+    "question": "What is the best strategy for managing per-tenant few-shot examples at scale?",
+    "options": {
+      "A": "Include examples for all tenants in every request so Claude learns all formats simultaneously",
+      "B": "Dynamically select only the relevant tenant's examples at request time, and use embedding similarity to choose the most relevant subset of that tenant's examples based on the current input, respecting context budget",
+      "C": "Fine-tune separate models for each tenant to avoid the need for few-shot examples",
+      "D": "Use a single standardized format for all tenants and convert the output after Claude responds"
+    },
+    "correctAnswer": "B",
+    "explanation": "Dynamic, per-tenant example selection with similarity-based ranking gives each request the most relevant examples without wasting context on irrelevant tenants. Option A wastes context on irrelevant formats and may confuse Claude. Option C is expensive and operationally complex for format differences. Option D ignores legitimate tenant requirements for different formats.",
+    "examTrap": "Option C (fine-tuning per tenant) seems robust but is expensive overkill for format differences that few-shot examples handle well.",
+    "conceptsTested": [
+      "dynamic example injection",
+      "multi-tenant prompting",
+      "context-aware example selection"
+    ]
+  },
+  {
+    "id": "d4-q08",
+    "domain": 4,
+    "taskStatement": "4.3",
+    "difficulty": "foundation",
+    "scenario": "A developer wants Claude to always return a structured JSON object with fields: sentiment (positive/negative/neutral), confidence (0-1 float), and key_phrases (array of strings). They use a plain text prompt saying \"Return JSON with sentiment, confidence, and key_phrases\" but Claude sometimes returns malformed JSON or adds extra fields.",
+    "question": "What is the most reliable way to get structured JSON output from Claude?",
+    "options": {
+      "A": "Add \"IMPORTANT: Return valid JSON only\" to the prompt in capital letters",
+      "B": "Define a tool with an input_schema that specifies the exact JSON structure including field types and constraints, then use tool_choice to force Claude to call it, guaranteeing schema-compliant structured output",
+      "C": "Parse Claude's text response with a lenient JSON parser that handles malformed output",
+      "D": "Set the response_format to json_object in the API parameters"
+    },
+    "correctAnswer": "B",
+    "explanation": "Using tool_use with a defined input_schema forces Claude to produce output matching the exact schema. The API guarantees the output conforms to the schema. Option A does not guarantee valid JSON. Option C works around the problem instead of preventing it. Option D is not a feature of the Claude API; this is an OpenAI-specific parameter.",
+    "examTrap": "Option D is a trap for developers coming from OpenAI's API. Claude uses tool_use schemas for structured output, not a response_format parameter.",
+    "conceptsTested": [
+      "tool_use for structured output",
+      "input_schema",
+      "guaranteed JSON structure"
+    ]
+  },
+  {
+    "id": "d4-q09",
+    "domain": 4,
+    "taskStatement": "4.3",
+    "difficulty": "intermediate",
+    "scenario": "A TypeScript application uses the Claude API with a Zod schema to validate tool outputs. The Zod schema defines a strict shape: z.object({ items: z.array(z.object({ name: z.string(), price: z.number().positive() })) }). Sometimes Claude returns items with negative prices for refunds, causing Zod validation failures.",
+    "question": "How should the developer handle the mismatch between Claude's output and the Zod schema?",
+    "options": {
+      "A": "Remove the Zod validation to allow Claude full flexibility in its responses",
+      "B": "Update the Zod schema to accurately reflect all valid output shapes including refunds (e.g., allow negative prices or add a refund boolean), and update the tool description to document valid values, keeping validation tight but correct",
+      "C": "Add a try-catch around Zod parsing and silently convert negative prices to positive",
+      "D": "Use z.any() for the price field to accept any value without validation"
+    },
+    "correctAnswer": "B",
+    "explanation": "The schema should accurately model the domain including edge cases like refunds. Updating both the schema and the tool description ensures Claude knows what is valid and the application validates correctly. Option A removes a critical safety layer. Option C silently corrupts data. Option D effectively removes validation for that field, losing type safety.",
+    "examTrap": "Option C seems pragmatic (just fix the data) but silently converting negative to positive corrupts refund data and masks a real modeling issue.",
+    "conceptsTested": [
+      "Zod schema design",
+      "schema-output alignment",
+      "domain modeling in tool schemas"
+    ]
+  },
+  {
+    "id": "d4-q10",
+    "domain": 4,
+    "taskStatement": "4.3",
+    "difficulty": "advanced",
+    "scenario": "An architect designs a pipeline where Claude extracts data from documents using tool_use with strict schemas. They want to validate output at multiple levels: (1) JSON structure matches the schema, (2) business rules are satisfied (e.g., end_date after start_date), (3) extracted values are consistent with the source document.",
+    "question": "How should multi-level validation be implemented for Claude's structured output?",
+    "options": {
+      "A": "Put all validation rules in the tool schema using JSON Schema constraints",
+      "B": "Use the tool input_schema for structural validation, add a Zod refinement layer for business rule validation, and implement a separate semantic verification step that checks extracted values against the source document",
+      "C": "Ask Claude to self-validate its output before returning it",
+      "D": "Only validate the JSON structure since business rules should be handled by downstream systems"
+    },
+    "correctAnswer": "B",
+    "explanation": "Layered validation provides defense in depth: the schema ensures structure, Zod refinements enforce business rules, and semantic verification catches extraction errors. Option A cannot express all business rules in JSON Schema alone (e.g., cross-field constraints). Option C is unreliable since LLMs cannot reliably self-verify. Option D pushes validation downstream where errors are harder to fix.",
+    "examTrap": "Option C (self-validation) sounds efficient but LLMs cannot reliably detect their own errors. External validation layers are essential.",
+    "conceptsTested": [
+      "layered validation",
+      "Zod refinements",
+      "semantic verification"
+    ]
+  },
+  {
+    "id": "d4-q11",
+    "domain": 4,
+    "taskStatement": "4.4",
+    "difficulty": "foundation",
+    "scenario": "A developer uses Claude to generate SQL queries from natural language. Sometimes the generated SQL has syntax errors. Currently the developer manually fixes these errors. They want an automated approach to handle invalid SQL generation.",
+    "question": "What pattern automates handling of invalid Claude outputs?",
+    "options": {
+      "A": "Increase temperature to generate more diverse outputs, hoping one is valid",
+      "B": "Implement a validation-retry loop: validate the output (e.g., parse the SQL), and if validation fails, send the error message back to Claude with the original request asking it to fix the issue, repeating until valid or a retry limit is reached",
+      "C": "Use a regex to fix common SQL syntax errors in post-processing",
+      "D": "Switch to a larger model which never produces syntax errors"
+    },
+    "correctAnswer": "B",
+    "explanation": "The validation-retry pattern catches errors programmatically, feeds them back to Claude for correction, and loops until the output passes validation. This is a standard agentic pattern. Option A increases randomness, making errors more likely. Option C handles only known error patterns and is brittle. Option D is incorrect because no model is error-free.",
+    "examTrap": "Option D is tempting because larger models are more capable, but no model guarantees zero syntax errors. Validation-retry is necessary regardless of model size.",
+    "conceptsTested": [
+      "validation-retry pattern",
+      "automated error correction",
+      "agentic loops"
+    ]
+  },
+  {
+    "id": "d4-q12",
+    "domain": 4,
+    "taskStatement": "4.4",
+    "difficulty": "intermediate",
+    "scenario": "A validation-retry pipeline for code generation has three retries. On the first attempt, Claude generates Python code with an import error. The error is fed back and Claude fixes it, but introduces a type error. The type error is fed back and Claude fixes it but reintroduces the import error. The loop oscillates between two error states.",
+    "question": "How should the developer prevent oscillating errors in a validation-retry loop?",
+    "options": {
+      "A": "Increase the retry limit from 3 to 10 to give Claude more chances to converge",
+      "B": "Include the full history of previous attempts and their errors in each retry prompt, so Claude can see all past failures simultaneously and avoid repeating them",
+      "C": "Reset the conversation on each retry so Claude starts fresh without bias from previous attempts",
+      "D": "Switch to a different model after each failed attempt"
+    },
+    "correctAnswer": "B",
+    "explanation": "Providing the complete error history prevents Claude from oscillating because it can see all previous failures and avoid repeating them. This is the accumulating context pattern. Option A just extends the oscillation without fixing it. Option C throws away valuable error information. Option D does not address the root cause and adds unnecessary complexity.",
+    "examTrap": "Option C (fresh start) seems logical to avoid bias, but losing the error history means Claude will likely repeat the same mistakes.",
+    "conceptsTested": [
+      "error history accumulation",
+      "retry loop optimization",
+      "oscillation prevention"
+    ]
+  },
+  {
+    "id": "d4-q13",
+    "domain": 4,
+    "taskStatement": "4.4",
+    "difficulty": "advanced",
+    "scenario": "An enterprise system uses a validation-retry pattern for generating regulatory compliance reports. The validation involves running the output through a rules engine with 200+ rules. Retry attempts are expensive ($0.50 per attempt). The team wants to minimize cost while maintaining report quality. Currently, the average report requires 3.2 retries.",
+    "question": "How should the team optimize the validation-retry pipeline for cost efficiency?",
+    "options": {
+      "A": "Remove the validation step and trust Claude to produce correct reports",
+      "B": "Improve the initial prompt with explicit rules, examples, and constraints to reduce the first-attempt failure rate, batch all validation errors into a single retry message, and set a strict retry budget of 2 attempts maximum",
+      "C": "Run validation only on a random sample of reports to reduce costs",
+      "D": "Use a cheaper, smaller model for retry attempts to save money"
+    },
+    "correctAnswer": "B",
+    "explanation": "Reducing first-attempt failures through better prompts is the highest-leverage optimization. Batching errors means each retry addresses multiple issues simultaneously, reducing the number of round trips. A retry budget prevents runaway costs. Option A removes quality assurance. Option C misses errors on non-sampled reports. Option D may produce lower-quality fixes, increasing total retries.",
+    "examTrap": "Option D (cheaper model for retries) seems cost-effective, but a less capable model may need more retries, potentially costing more overall.",
+    "conceptsTested": [
+      "cost-optimized retry",
+      "prompt improvement for first-attempt success",
+      "retry budget management"
+    ]
+  },
+  {
+    "id": "d4-q14",
+    "domain": 4,
+    "taskStatement": "4.5",
+    "difficulty": "foundation",
+    "scenario": "A data science team needs to classify 50,000 customer feedback entries using Claude. They currently process them one at a time via the Messages API, which takes 12 hours and costs $500. They need a faster, cheaper approach for this non-real-time batch workload.",
+    "question": "Which Claude API feature is designed for high-volume, non-real-time processing?",
+    "options": {
+      "A": "Use streaming mode to process responses faster",
+      "B": "The Message Batches API, which processes large volumes of requests asynchronously at 50% of the standard API cost, with results returned within 24 hours",
+      "C": "Increase the rate limit on the standard Messages API by contacting Anthropic support",
+      "D": "Use parallel threads to send multiple Messages API requests simultaneously"
+    },
+    "correctAnswer": "B",
+    "explanation": "The Message Batches API is purpose-built for high-volume, non-real-time workloads. It offers 50% cost reduction and processes batches asynchronously. Option A speeds up individual response delivery but does not reduce cost or improve throughput at scale. Option C does not reduce costs. Option D adds complexity and does not reduce per-request costs.",
+    "examTrap": "Option D (parallel requests) seems like an obvious solution, but it does not reduce cost and may hit rate limits. The Batch API is the purpose-built solution.",
+    "conceptsTested": [
+      "Message Batches API",
+      "batch processing cost savings",
+      "async vs real-time processing"
+    ]
+  },
+  {
+    "id": "d4-q15",
+    "domain": 4,
+    "taskStatement": "4.5",
+    "difficulty": "intermediate",
+    "scenario": "A company uses the Claude Batch API for nightly report generation. They submit a batch of 10,000 requests at 10 PM and need results by 6 AM. However, some reports are time-sensitive and needed within minutes. The architect must design a system that handles both batch and real-time needs.",
+    "question": "How should the architect design the system to handle both batch and real-time requests?",
+    "options": {
+      "A": "Use the Batch API for everything and poll frequently for time-sensitive results",
+      "B": "Route time-sensitive requests to the standard Messages API for immediate responses, and route non-urgent bulk requests to the Message Batches API for 50% cost savings, using a request router based on priority",
+      "C": "Use only the standard Messages API for everything to ensure consistent latency",
+      "D": "Submit time-sensitive requests as separate single-item batches for faster processing"
+    },
+    "correctAnswer": "B",
+    "explanation": "A priority-based router gives the best of both worlds: real-time latency for urgent requests and 50% cost savings for bulk processing. Option A cannot guarantee timely results since Batch API has up to 24-hour processing windows. Option C misses the 50% savings on the 10,000 non-urgent requests. Option D does not guarantee faster processing since the Batch API does not prioritize smaller batches.",
+    "examTrap": "Option D seems logical (smaller batch = faster processing) but the Batch API does not guarantee faster turnaround for smaller batches.",
+    "conceptsTested": [
+      "batch vs real-time routing",
+      "priority-based API selection",
+      "cost optimization strategy"
+    ]
+  },
+  {
+    "id": "d4-q16",
+    "domain": 4,
+    "taskStatement": "4.5",
+    "difficulty": "advanced",
+    "scenario": "A healthcare analytics platform processes 500,000 medical record summaries weekly using the Claude Batch API. Each batch contains records from multiple hospitals with different data formats. Occasionally, 5-10% of records in a batch fail due to format issues, and the team reruns the entire batch, wasting money on the 90% that already succeeded.",
+    "question": "What is the optimal error handling strategy for large batch jobs with partial failures?",
+    "options": {
+      "A": "Pre-validate all records before submission to eliminate all failures",
+      "B": "After batch completion, identify failed records from the batch results, fix the format issues, and submit only the failed records as a new smaller batch, avoiding reprocessing of successful records",
+      "C": "Switch entirely to the real-time Messages API for better error handling per record",
+      "D": "Accept the 5-10% failure rate as cost of doing business and ignore failed records"
+    },
+    "correctAnswer": "B",
+    "explanation": "The Batch API returns per-request results, allowing you to identify failures and resubmit only those. This avoids reprocessing the 90% that succeeded. Option A is ideal but impractical since some format issues only manifest during processing. Option C loses the 50% batch discount on 500,000 records. Option D loses valuable medical data.",
+    "examTrap": "Option A (pre-validate everything) sounds like the right engineering approach, but some errors are only discoverable during LLM processing, not during format validation.",
+    "conceptsTested": [
+      "partial batch failure handling",
+      "selective resubmission",
+      "batch cost optimization"
+    ]
+  },
+  {
+    "id": "d4-q17",
+    "domain": 4,
+    "taskStatement": "4.6",
+    "difficulty": "foundation",
+    "scenario": "A legal team uses Claude to review contracts for risks. They worry that a single Claude call might miss important risks or hallucinate non-existent ones. They want higher confidence in the review results before sending to attorneys.",
+    "question": "What technique improves the reliability of Claude's analysis for high-stakes reviews?",
+    "options": {
+      "A": "Use a longer system prompt with more detailed instructions",
+      "B": "Run multiple independent Claude instances on the same contract with varied prompts or temperatures, then aggregate the results, flagging risks identified by multiple instances as high-confidence and risks found by only one instance for human review",
+      "C": "Use the largest available model, which eliminates the need for verification",
+      "D": "Have Claude review the contract twice in the same conversation for consistency"
+    },
+    "correctAnswer": "B",
+    "explanation": "Multi-instance review with aggregation provides ensemble-like reliability. Risks found by multiple independent instances are more likely to be real, while singleton findings may be hallucinations or genuine edge cases worth human review. Option A may help but does not provide the statistical reliability of multiple instances. Option C does not eliminate errors regardless of model size. Option D is not independent since the second review is biased by the first in the same context.",
+    "examTrap": "Option D (review twice in same conversation) seems like it achieves the same goal, but the second review is contaminated by the first since they share context.",
+    "conceptsTested": [
+      "multi-instance review",
+      "result aggregation",
+      "ensemble reliability"
+    ]
+  },
+  {
+    "id": "d4-q18",
+    "domain": 4,
+    "taskStatement": "4.6",
+    "difficulty": "intermediate",
+    "scenario": "A content moderation system runs three Claude instances on each user post. Instance 1 flags the post as safe, Instance 2 flags it as potentially harmful, and Instance 3 flags it as safe. The system needs to decide the final verdict and handle disagreements systematically.",
+    "question": "What aggregation strategy should the system use for multi-instance moderation results?",
+    "options": {
+      "A": "Always go with the majority vote, so 2-out-of-3 safe means the post is approved",
+      "B": "Use asymmetric aggregation: for safety-critical decisions, if any instance flags potential harm, escalate for human review even if the majority says safe, because the cost of missing harmful content is higher than over-flagging",
+      "C": "Average the confidence scores from all three instances and apply a threshold",
+      "D": "Use the result from the instance that responded fastest, as it is most likely correct"
+    },
+    "correctAnswer": "B",
+    "explanation": "Asymmetric aggregation is appropriate when the cost of errors is asymmetric. Missing harmful content (false negative) is worse than over-flagging (false positive) in moderation. Escalating any flag to human review provides a safety net. Option A treats all errors equally when they are not. Option C assumes confidence scores are well-calibrated across instances. Option D has no basis in accuracy.",
+    "examTrap": "Option A (majority vote) seems fair and democratic, but content moderation requires asymmetric treatment: the cost of missing harmful content far exceeds the cost of over-flagging.",
+    "conceptsTested": [
+      "asymmetric aggregation",
+      "safety-critical decision logic",
+      "multi-instance moderation"
+    ]
+  },
+  {
+    "id": "d4-q19",
+    "domain": 4,
+    "taskStatement": "4.6",
+    "difficulty": "advanced",
+    "scenario": "A financial analysis platform runs 5 Claude instances on each earnings report. Each instance extracts key metrics: revenue, profit, growth rate. The instances mostly agree but show small numerical differences (e.g., revenue extracted as $4.2B by three instances and $4.3B by two). The system needs a strategy for numerical aggregation.",
+    "question": "How should the system aggregate numerical extractions from multiple Claude instances?",
+    "options": {
+      "A": "Always use the value extracted by the majority of instances",
+      "B": "Use median values for numerical fields to reduce outlier influence, flag extractions where the spread exceeds a threshold for human review, and cross-reference extracted values against structured data sources when available",
+      "C": "Average all extracted values to get the most accurate number",
+      "D": "Use the extraction from the instance with the highest token count, assuming more tokens means more careful analysis"
+    },
+    "correctAnswer": "B",
+    "explanation": "Median reduces outlier impact better than mean for numerical extraction. Flagging high-spread results catches genuine ambiguity. Cross-referencing with structured data provides ground truth validation. Option A may select a rounded or approximate majority value. Option C is sensitive to outliers. Option D has no correlation between token count and accuracy.",
+    "examTrap": "Option C (averaging) seems statistically sound, but if one instance extracts a wildly wrong number, the average is dragged away from the correct value. Median is more robust.",
+    "conceptsTested": [
+      "numerical aggregation strategies",
+      "median vs mean",
+      "outlier detection in multi-instance extraction"
+    ]
+  },
+  {
+    "id": "d4-q20",
+    "domain": 4,
+    "taskStatement": "4.6",
+    "difficulty": "intermediate",
+    "scenario": "A code generation system uses three Claude instances to generate solutions independently, then a fourth \"judge\" Claude instance evaluates all three solutions and selects the best one. The team wants to know if this approach is more effective than a single generation with a validation-retry loop.",
+    "question": "What is the primary advantage of multi-instance generation with a judge over single-instance validation-retry?",
+    "options": {
+      "A": "It is always cheaper because fewer total tokens are generated",
+      "B": "The judge instance explores diverse solution approaches simultaneously, which increases the chance of finding the optimal solution, whereas validation-retry iterates on a single approach and may get stuck in a local optimum",
+      "C": "The judge instance is guaranteed to select the correct solution every time",
+      "D": "Multi-instance generation eliminates the need for any testing or validation"
+    },
+    "correctAnswer": "B",
+    "explanation": "Multiple independent generations explore different solution strategies in parallel, creating diversity. The judge then selects from genuinely different approaches. Validation-retry tends to make incremental fixes to one approach. Option A is wrong because multi-instance costs more per round. Option C overstates the judge's reliability. Option D is wrong because generated code still needs testing.",
+    "examTrap": "Option A (cheaper) is wrong because running 3 generators plus a judge costs more per round than a single generation. The value is in solution quality, not cost.",
+    "conceptsTested": [
+      "multi-instance vs single-instance",
+      "solution diversity",
+      "judge pattern in code generation"
+    ]
+  }
+]

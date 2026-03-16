@@ -1,0 +1,332 @@
+[
+  {
+    "id": "d5-q01",
+    "domain": 5,
+    "taskStatement": "5.1",
+    "difficulty": "foundation",
+    "scenario": "A customer support chatbot built with Claude has been in a conversation for 45 minutes. The context window is nearly full with conversation history. The user refers back to an issue they mentioned 30 minutes ago. The developer needs a strategy to manage the growing context.",
+    "question": "What is the recommended approach to manage context when the conversation exceeds the context window?",
+    "options": {
+      "A": "Truncate the oldest messages from the conversation to make room for new ones",
+      "B": "Summarize older conversation segments before evicting them, preserving key facts and decisions in a condensed form that stays in context while removing verbose details",
+      "C": "Start a new conversation and tell the user to repeat their earlier information",
+      "D": "Increase the max_tokens parameter to expand the context window"
+    },
+    "correctAnswer": "B",
+    "explanation": "Summarization before eviction preserves important context (key facts, decisions, user preferences) while reclaiming token space. This maintains conversation coherence. Option A loses important information entirely. Option C disrupts the user experience. Option D is wrong because max_tokens controls output length, not the context window size.",
+    "examTrap": "Option A (truncation) seems simple and efficient, but blindly removing old messages can delete critical context the user expects Claude to remember.",
+    "conceptsTested": [
+      "context window management",
+      "summarization before eviction",
+      "conversation continuity"
+    ]
+  },
+  {
+    "id": "d5-q02",
+    "domain": 5,
+    "taskStatement": "5.1",
+    "difficulty": "intermediate",
+    "scenario": "An agentic coding assistant has been working on a large refactoring task for 200 turns. The conversation history includes successful code changes, failed attempts, error messages, and design decisions. The context window is 80% full and the task is only half complete. The architect needs to decide what to preserve and what to evict.",
+    "question": "What context preservation strategy optimizes for task completion in long-running agentic sessions?",
+    "options": {
+      "A": "Keep all successful code changes and remove all error messages and failed attempts",
+      "B": "Create a structured summary that preserves: (1) current system state and file changes made, (2) key design decisions and their rationale, (3) known constraints and gotchas discovered, while evicting verbose intermediate outputs like full file contents and raw error logs",
+      "C": "Keep only the most recent 50 turns and discard everything before that",
+      "D": "Store the entire conversation in an external database and start a fresh context"
+    },
+    "correctAnswer": "B",
+    "explanation": "A structured summary captures the decision-critical information (what was done, why, what to avoid) while releasing tokens consumed by verbose outputs. This gives Claude the context it needs without the noise. Option A loses valuable learning from failures. Option C uses an arbitrary cutoff that may lose critical early decisions. Option D loses in-context continuity; Claude cannot query an external database mid-reasoning.",
+    "examTrap": "Option A seems efficient (keep successes, drop failures) but failed attempts often contain critical lessons about what approaches do not work.",
+    "conceptsTested": [
+      "structured context summaries",
+      "selective eviction",
+      "long-running agent context"
+    ]
+  },
+  {
+    "id": "d5-q03",
+    "domain": 5,
+    "taskStatement": "5.1",
+    "difficulty": "advanced",
+    "scenario": "A multi-agent system has three Claude instances: a planner, a coder, and a reviewer. Each agent has its own context window. The planner generates a detailed 5-step plan. The coder implements each step. The reviewer checks each implementation. After step 3, the coder's context is nearly full with code from steps 1-3.",
+    "question": "How should context be managed across agents in a multi-agent pipeline to complete all 5 steps?",
+    "options": {
+      "A": "Share one context window across all three agents to maintain full visibility",
+      "B": "Have each agent maintain a compact state summary that is passed to the next step: the coder receives the plan step plus a summary of what has been implemented so far, and the reviewer receives the current step implementation plus a summary of prior review decisions, keeping each agent context focused and within budget",
+      "C": "Give each agent the complete conversation history from all other agents",
+      "D": "Complete all 5 steps in a single agent to avoid cross-agent context issues"
+    },
+    "correctAnswer": "B",
+    "explanation": "Passing compact state summaries between agents keeps each agent focused with relevant context. The coder does not need the reviewer's full feedback history, just the current implementation state. Option A is architecturally impossible since agents have separate contexts. Option C fills each agent's context with irrelevant information. Option D loses the benefits of specialization and may overflow a single context.",
+    "examTrap": "Option D (single agent) seems simpler, but combining planning, coding, and reviewing in one context leads to a cluttered context that degrades all three capabilities.",
+    "conceptsTested": [
+      "cross-agent context management",
+      "state summary passing",
+      "multi-agent context budgets"
+    ]
+  },
+  {
+    "id": "d5-q04",
+    "domain": 5,
+    "taskStatement": "5.2",
+    "difficulty": "foundation",
+    "scenario": "A medical information chatbot built with Claude answers patient questions about medications. When asked about drug interactions for a complex medication regimen, Claude provides an answer but the developer knows Claude may not always be reliable for high-stakes medical advice.",
+    "question": "What pattern should be implemented for high-stakes decisions where Claude's accuracy is critical?",
+    "options": {
+      "A": "Add a disclaimer to every response saying \"Consult your doctor\"",
+      "B": "Implement an escalation pattern where Claude assesses its confidence level, and when the query involves complex medical decisions or Claude is uncertain, it explicitly flags the response for human expert review rather than providing a potentially incorrect answer",
+      "C": "Fine-tune Claude on medical data to ensure 100% accuracy",
+      "D": "Limit Claude to answering only simple questions and reject all complex queries"
+    },
+    "correctAnswer": "B",
+    "explanation": "Confidence-based escalation lets Claude handle routine queries autonomously while routing complex or uncertain cases to human experts. This balances automation with safety. Option A provides legal cover but does not prevent harm from wrong answers. Option C cannot achieve 100% accuracy and fine-tuning for medical use requires rigorous validation. Option D is too restrictive and reduces the system's utility.",
+    "examTrap": "Option A (disclaimers) is common in practice but does not actually prevent Claude from giving potentially dangerous incorrect medical information.",
+    "conceptsTested": [
+      "escalation patterns",
+      "confidence-based routing",
+      "human-in-the-loop for safety"
+    ]
+  },
+  {
+    "id": "d5-q05",
+    "domain": 5,
+    "taskStatement": "5.2",
+    "difficulty": "intermediate",
+    "scenario": "An agentic system for financial trading uses Claude to analyze market data and suggest trades. The architect wants Claude to self-assess confidence on each recommendation. However, research shows LLMs are poorly calibrated in confidence estimation, often expressing high confidence even when wrong.",
+    "question": "How should the architect implement reliable confidence thresholds given LLM calibration issues?",
+    "options": {
+      "A": "Trust Claude's self-reported confidence scores and set a threshold at 80%",
+      "B": "Use external signals to calibrate confidence: compare Claude's recommendation against historical data patterns, check agreement across multiple model runs, and validate against rule-based sanity checks, rather than relying solely on Claude's self-assessed confidence",
+      "C": "Remove confidence estimation entirely since it is unreliable",
+      "D": "Ask Claude to rate its confidence on a 1-10 scale, which is more granular than percentages"
+    },
+    "correctAnswer": "B",
+    "explanation": "External calibration signals (historical comparison, multi-run agreement, rule-based checks) provide more reliable confidence estimates than LLM self-assessment alone. This compensates for known calibration issues. Option A trusts unreliable self-assessment. Option C throws away a useful signal that can be calibrated externally. Option D changes the scale but does not fix the underlying calibration problem.",
+    "examTrap": "Option A is the most common mistake. LLMs often say they are 95% confident when they are wrong. External validation is essential for financial decisions.",
+    "conceptsTested": [
+      "confidence calibration",
+      "external validation signals",
+      "LLM reliability limitations"
+    ]
+  },
+  {
+    "id": "d5-q06",
+    "domain": 5,
+    "taskStatement": "5.2",
+    "difficulty": "advanced",
+    "scenario": "A legal document review system processes 10,000 contracts daily. The system uses Claude for initial review and human lawyers for complex cases. Currently 40% of contracts are escalated to humans, overwhelming the legal team. The architect needs to optimize the escalation threshold to reduce human load while maintaining review quality.",
+    "question": "How should the architect tune the escalation threshold to balance automation and human review?",
+    "options": {
+      "A": "Set a fixed confidence threshold and never adjust it",
+      "B": "Implement an adaptive threshold: analyze historical data to find where Claude's error rate spikes, set the threshold just above that point, regularly recalibrate using human review outcomes as ground truth, and use different thresholds for different contract types based on risk",
+      "C": "Escalate only contracts above a certain dollar value, ignoring complexity",
+      "D": "Remove escalation entirely and have Claude handle all contracts to eliminate the bottleneck"
+    },
+    "correctAnswer": "B",
+    "explanation": "Adaptive thresholds based on historical error analysis optimize the automation-accuracy tradeoff. Different contract types have different risk profiles requiring different thresholds. Regular recalibration ensures the threshold stays accurate as the model and contract types evolve. Option A ignores that optimal thresholds change over time. Option C uses a poor proxy for complexity. Option D removes a critical quality safeguard.",
+    "examTrap": "Option C (dollar value threshold) seems practical but low-value contracts can have complex legal issues, and high-value contracts can be straightforward.",
+    "conceptsTested": [
+      "adaptive escalation thresholds",
+      "threshold calibration",
+      "risk-based routing"
+    ]
+  },
+  {
+    "id": "d5-q07",
+    "domain": 5,
+    "taskStatement": "5.3",
+    "difficulty": "intermediate",
+    "scenario": "A multi-agent system has an orchestrator Claude that delegates tasks to specialist agents: a research agent, a coding agent, and a testing agent. The research agent returns incorrect information about an API endpoint. The coding agent uses this incorrect information to write code. The testing agent then finds the code does not work but cannot determine why.",
+    "question": "What is the fundamental problem illustrated by this failure cascade?",
+    "options": {
+      "A": "The testing agent is not sophisticated enough to debug the issue",
+      "B": "Error propagation across agents: the research agent's error cascades through the pipeline because downstream agents trust upstream outputs without validation, creating a chain of failures that is difficult to diagnose",
+      "C": "The orchestrator should have assigned all tasks to a single agent",
+      "D": "The agents are using incompatible output formats"
+    },
+    "correctAnswer": "B",
+    "explanation": "This illustrates classic error propagation in multi-agent systems. Each agent trusts its input without independent validation, so an upstream error propagates and amplifies through the pipeline. Option A blames the wrong component. Option C loses the benefits of specialization and does not address the validation gap. Option D describes a different problem entirely.",
+    "examTrap": "Option A (better testing agent) addresses a symptom, not the root cause. The real fix is validation at each stage to catch errors before they propagate.",
+    "conceptsTested": [
+      "error propagation",
+      "multi-agent failure cascades",
+      "upstream error amplification"
+    ]
+  },
+  {
+    "id": "d5-q08",
+    "domain": 5,
+    "taskStatement": "5.3",
+    "difficulty": "advanced",
+    "scenario": "An architect redesigns the multi-agent pipeline to prevent error propagation. They consider adding validation at each agent boundary. However, validation adds latency and cost. The pipeline processes 1,000 requests per hour and each validation step adds $0.02 and 2 seconds per request.",
+    "question": "How should the architect balance error prevention with cost and latency in a multi-agent pipeline?",
+    "options": {
+      "A": "Add full validation after every single agent interaction regardless of cost",
+      "B": "Implement risk-based validation: add thorough validation at critical boundaries where errors have high downstream impact (e.g., after the research agent before coding begins), use lightweight checks at lower-risk boundaries, and skip validation only where errors are easily reversible",
+      "C": "Remove all validation to minimize latency and rely on the final testing agent to catch all errors",
+      "D": "Run the pipeline twice and compare results instead of adding per-step validation"
+    },
+    "correctAnswer": "B",
+    "explanation": "Risk-based validation allocates validation budget where it matters most. Critical boundaries (like research-to-coding) get thorough validation because errors there cascade widely. Low-risk boundaries get lightweight checks. Option A is cost-prohibitive and slow. Option C catches errors too late after significant wasted computation. Option D doubles the total cost without targeted error prevention.",
+    "examTrap": "Option A (validate everything) seems safest, but at 1,000 requests/hour the cost and latency impact may be prohibitive for low-risk boundaries.",
+    "conceptsTested": [
+      "risk-based validation",
+      "cost-latency tradeoffs",
+      "critical boundary identification"
+    ]
+  },
+  {
+    "id": "d5-q09",
+    "domain": 5,
+    "taskStatement": "5.4",
+    "difficulty": "intermediate",
+    "scenario": "A developer uses Claude Code to understand a large unfamiliar codebase with 500+ files. They paste the entire repository structure into the prompt and ask Claude to explain the architecture. The context window fills up and Claude gives a shallow, incomplete analysis that misses key architectural patterns.",
+    "question": "What codebase exploration strategy works better for large repositories?",
+    "options": {
+      "A": "Paste the entire codebase into the prompt using a larger context window model",
+      "B": "Use an iterative exploration strategy: start with high-level structure (directory tree, README, entry points), then drill down into specific modules based on initial findings, using targeted file reads and grep searches to build understanding incrementally",
+      "C": "Only look at the most recently modified files since they are the most important",
+      "D": "Generate a UML diagram of the entire codebase before asking any questions"
+    },
+    "correctAnswer": "B",
+    "explanation": "Iterative exploration mimics how experienced developers learn codebases: start broad, then go deep. This keeps context focused and allows Claude to build a coherent mental model. Option A overwhelms the context window with irrelevant details. Option C misses foundational architecture that rarely changes. Option D requires tooling that may not exist and is overkill for initial exploration.",
+    "examTrap": "Option A (bigger context window) seems like the obvious fix, but even 200K tokens cannot hold a 500-file codebase, and dumping everything in reduces Claude's analytical quality.",
+    "conceptsTested": [
+      "iterative codebase exploration",
+      "targeted file reading",
+      "context-efficient analysis"
+    ]
+  },
+  {
+    "id": "d5-q10",
+    "domain": 5,
+    "taskStatement": "5.4",
+    "difficulty": "advanced",
+    "scenario": "An architect is building an automated code migration tool using Claude. The tool needs to understand dependency relationships between modules before making changes. A naive approach reads every file and builds a dependency graph, but this exceeds the context window for large projects with 2,000+ files.",
+    "question": "What strategy should the migration tool use to understand dependencies without exceeding context limits?",
+    "options": {
+      "A": "Read all 2,000 files into context at once using the largest available model",
+      "B": "Use a multi-phase approach: first use lightweight static analysis tools (like grep for imports or AST parsers) to build a dependency graph outside of Claude, then feed Claude only the relevant subgraph of files for each migration task, keeping context focused and within budget",
+      "C": "Ask Claude to guess the dependency structure based on file names and directory layout",
+      "D": "Migrate each file independently without understanding dependencies"
+    },
+    "correctAnswer": "B",
+    "explanation": "Combining external static analysis with targeted Claude context creates an efficient pipeline. Static tools extract dependency graphs cheaply, then Claude gets focused context for intelligent migration decisions. Option A is impossible even with large context windows for 2,000+ files. Option C produces unreliable dependency information. Option D breaks cross-module dependencies during migration.",
+    "examTrap": "Option C (guess from names) seems reasonable since many projects follow naming conventions, but it misses dynamic imports, re-exports, and unconventional structures.",
+    "conceptsTested": [
+      "static analysis preprocessing",
+      "targeted context loading",
+      "dependency-aware migration"
+    ]
+  },
+  {
+    "id": "d5-q11",
+    "domain": 5,
+    "taskStatement": "5.5",
+    "difficulty": "foundation",
+    "scenario": "A deployment automation system uses Claude to generate and execute infrastructure-as-code changes. The system can create, modify, or delete cloud resources. A junior engineer is concerned that Claude might accidentally delete a production database based on a misinterpreted request.",
+    "question": "What safety mechanism prevents catastrophic automated actions in agentic systems?",
+    "options": {
+      "A": "Add a system prompt that says \"Never delete production resources\"",
+      "B": "Implement approval gates that require human confirmation before executing destructive or high-impact actions such as resource deletion, production deployments, or permission changes, while allowing low-risk read-only operations to proceed automatically",
+      "C": "Run all Claude-generated changes in a sandbox that automatically promotes to production after 24 hours",
+      "D": "Limit Claude to only generating plans, never executing any actions"
+    },
+    "correctAnswer": "B",
+    "explanation": "Approval gates create a human checkpoint for high-risk operations while maintaining automation for safe operations. This balances productivity with safety. Option A is unreliable since LLMs do not consistently follow such instructions. Option C delays but does not prevent bad changes from reaching production. Option D is overly conservative and eliminates the value of automation.",
+    "examTrap": "Option A (system prompt rule) is the most common mistake. System prompts can be circumvented or misinterpreted. Architectural safeguards (approval gates) are more reliable than prompt-based rules.",
+    "conceptsTested": [
+      "approval gates",
+      "human-in-the-loop",
+      "destructive action prevention"
+    ]
+  },
+  {
+    "id": "d5-q12",
+    "domain": 5,
+    "taskStatement": "5.5",
+    "difficulty": "intermediate",
+    "scenario": "A Claude-powered code review system automatically merges PRs that pass all checks. The team wants to add human approval only for changes that affect critical paths: authentication, billing, and database schema migrations. All other changes should auto-merge to maintain developer velocity.",
+    "question": "How should the approval gate be designed to balance velocity with safety?",
+    "options": {
+      "A": "Require human approval for every PR regardless of what it changes",
+      "B": "Implement path-based approval rules: changes touching auth/, billing/, or migration files require human approval, while changes to other paths auto-merge if CI passes, with the rules defined declaratively in configuration rather than in Claude's prompt",
+      "C": "Let Claude decide which PRs need human review based on its assessment of risk",
+      "D": "Auto-merge everything and use post-merge monitoring to catch issues"
+    },
+    "correctAnswer": "B",
+    "explanation": "Declarative path-based rules provide deterministic, auditable approval logic. Critical paths always get human review while non-critical paths maintain velocity. Option A is too slow for developer productivity. Option C delegates security decisions to an LLM, which is unreliable. Option D catches issues after they reach production, which is too late for critical systems.",
+    "examTrap": "Option C (Claude decides) is tempting because Claude can assess code complexity, but security-critical approval decisions should not depend on LLM judgment.",
+    "conceptsTested": [
+      "path-based approval rules",
+      "declarative security policies",
+      "velocity vs safety tradeoff"
+    ]
+  },
+  {
+    "id": "d5-q13",
+    "domain": 5,
+    "taskStatement": "5.5",
+    "difficulty": "advanced",
+    "scenario": "A financial services company uses Claude to process loan applications. Regulations require that any decision affecting a customer's loan must be explainable and auditable. The system currently auto-approves applications below $10,000 and escalates larger ones to human reviewers. The regulator asks for evidence that the AI system's auto-approved decisions are sound.",
+    "question": "What design pattern satisfies regulatory requirements for AI-assisted loan decisions?",
+    "options": {
+      "A": "Log only the final approval/denial decision for each application",
+      "B": "Implement a comprehensive audit trail: capture Claude's full reasoning chain, the input data used, the decision criteria applied, the confidence assessment, and any human overrides, with all artifacts stored immutably and linked to the specific model version used",
+      "C": "Have Claude generate a human-readable explanation after making each decision",
+      "D": "Remove Claude from the process entirely since financial regulations require human decisions"
+    },
+    "correctAnswer": "B",
+    "explanation": "A comprehensive audit trail provides the explainability and traceability regulators require. Capturing the full reasoning chain, inputs, and model version ensures decisions can be reviewed and validated. Option A lacks the detail needed for regulatory scrutiny. Option C generates post-hoc explanations that may not reflect the actual reasoning. Option D is unnecessarily extreme; regulations often allow AI-assisted decisions with proper oversight.",
+    "examTrap": "Option C (post-hoc explanations) seems sufficient, but regulators want the actual reasoning process, not a rationalization generated after the fact.",
+    "conceptsTested": [
+      "audit trails for AI decisions",
+      "regulatory compliance",
+      "decision explainability"
+    ]
+  },
+  {
+    "id": "d5-q14",
+    "domain": 5,
+    "taskStatement": "5.6",
+    "difficulty": "intermediate",
+    "scenario": "A research assistant built with Claude synthesizes information from multiple documents. A user asks about climate change policy, and Claude provides a comprehensive answer citing three sources. The user wants to verify the claims. The developer needs to ensure Claude's citations are traceable back to the original documents.",
+    "question": "How should provenance be tracked for Claude-generated content that synthesizes multiple sources?",
+    "options": {
+      "A": "Ask Claude to include citations in its response and trust they are accurate",
+      "B": "Implement an attribution chain that links each claim in Claude's output back to the specific source document, page, and passage it was derived from, using retrieval metadata to verify that cited sources were actually in the context and the claims match the source content",
+      "C": "Add a generic bibliography at the end of every response",
+      "D": "Store the full prompt and response as a single audit log entry"
+    },
+    "correctAnswer": "B",
+    "explanation": "Attribution chains with source verification ensure every claim is traceable and verifiable. Using retrieval metadata to cross-reference citations against actual context prevents hallucinated citations. Option A trusts Claude's citations without verification, which is unreliable since LLMs can hallucinate citations. Option C provides references without linking specific claims to sources. Option D captures the interaction but does not enable claim-level verification.",
+    "examTrap": "Option A is the most common mistake. Claude can generate plausible-looking citations that do not actually match the source content. Verification is essential.",
+    "conceptsTested": [
+      "attribution chains",
+      "source verification",
+      "provenance tracking"
+    ]
+  },
+  {
+    "id": "d5-q15",
+    "domain": 5,
+    "taskStatement": "5.6",
+    "difficulty": "advanced",
+    "scenario": "A large enterprise uses multiple Claude-based agents in a pipeline: an ingestion agent processes raw data, a transformation agent normalizes it, an analysis agent generates insights, and a reporting agent creates executive summaries. When an executive questions a number in the final report, the team needs to trace it back through every transformation to the original data source.",
+    "question": "What architecture supports end-to-end provenance in a multi-agent pipeline?",
+    "options": {
+      "A": "Have the final reporting agent explain where each number came from by re-analyzing the data",
+      "B": "Implement a provenance graph where each agent attaches metadata to its outputs: the source inputs used, the transformations applied, the agent version, and timestamp, creating an immutable chain of custody from raw data to final report that can be traversed in either direction",
+      "C": "Store a copy of every intermediate output and manually trace through them when questions arise",
+      "D": "Add a single audit log that records which agents were invoked and when"
+    },
+    "correctAnswer": "B",
+    "explanation": "A provenance graph with per-agent metadata creates a traversable chain of custody. Any value in the final report can be traced back through each transformation to its source data. Option A asks the LLM to reconstruct the provenance, which is unreliable. Option C stores data but does not link it, making manual tracing laborious at scale. Option D captures invocation order but not data lineage.",
+    "examTrap": "Option C (store everything) seems thorough, but without explicit links between inputs and outputs at each stage, tracing a specific number through the pipeline is impractical at enterprise scale.",
+    "conceptsTested": [
+      "provenance graphs",
+      "multi-agent audit trails",
+      "data lineage tracking"
+    ]
+  }
+]
