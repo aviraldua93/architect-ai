@@ -1,0 +1,362 @@
+[
+  {
+    "id": "d3-q01",
+    "domain": 3,
+    "taskStatement": "3.1",
+    "difficulty": "foundation",
+    "scenario": "A company has a monorepo with a top-level CLAUDE.md that sets the coding style to 'always use tabs for indentation'. Inside the packages/frontend/ directory, a local CLAUDE.md states 'use 2-space indentation for all files'. A developer asks Claude Code to create a new React component inside packages/frontend/src/.",
+    "question": "Which indentation style will Claude Code apply to the newly created component?",
+    "options": {
+      "A": "Tabs, because the root CLAUDE.md always takes precedence over child configurations",
+      "B": "2-space indentation, because the child CLAUDE.md in packages/frontend/ overrides the parent for files within its directory tree",
+      "C": "Claude Code will raise a conflict error and ask the developer to resolve it manually",
+      "D": "Claude Code ignores both files and uses its own default indentation style"
+    },
+    "correctAnswer": "B",
+    "explanation": "CLAUDE.md files follow a hierarchical inheritance model where child configurations override parent ones for files within their directory scope. The packages/frontend/CLAUDE.md is closer to the target file, so its 2-space indentation rule takes precedence. Option A reverses the actual hierarchy. Option C is wrong because Claude Code resolves conflicts automatically via the override model. Option D is wrong because Claude Code actively reads and applies CLAUDE.md configuration.",
+    "examTrap": "Option A is tempting because many configuration systems (e.g., some CI tools) give root configs highest priority — but CLAUDE.md uses a 'closest wins' model like .gitignore or .editorconfig.",
+    "conceptsTested": ["CLAUDE.md hierarchy", "child overrides parent", "directory-scoped configuration"]
+  },
+  {
+    "id": "d3-q02",
+    "domain": 3,
+    "taskStatement": "3.1",
+    "difficulty": "intermediate",
+    "scenario": "A team maintains three CLAUDE.md files in their project: one at the repository root specifying 'never modify test fixtures directly', one in src/ specifying 'use TypeScript strict mode for all source files', and one in src/utils/ specifying 'all utility functions must be pure — no side effects'. A developer asks Claude Code to add a caching side effect to src/utils/parser.ts.",
+    "question": "How does Claude Code resolve the instructions from multiple CLAUDE.md files for this request?",
+    "options": {
+      "A": "Only the src/utils/CLAUDE.md is read; parent CLAUDE.md files are ignored once a closer one exists",
+      "B": "All three CLAUDE.md files are merged — the file inherits rules from root and src/, plus the src/utils/ rules, with the most specific directory taking priority on conflicts",
+      "C": "Claude Code concatenates all three files and applies every rule equally with no priority ordering",
+      "D": "The developer must explicitly import parent rules using an 'extends' directive in each child CLAUDE.md"
+    },
+    "correctAnswer": "B",
+    "explanation": "CLAUDE.md uses additive inheritance — rules from all ancestor directories are merged together, and when there is a conflict, the most specific (closest) directory's rules win. In this case, the file at src/utils/parser.ts inherits the 'no test fixture modification' rule from root, the 'TypeScript strict mode' rule from src/, and the 'pure functions' rule from src/utils/. There is no conflict between these rules, so all three apply. Option A is wrong because parent rules are inherited, not discarded. Option C is wrong because priority ordering does exist for conflicts. Option D is wrong because inheritance is automatic — no 'extends' directive is needed.",
+    "examTrap": "Option A is a common misconception — many candidates assume child CLAUDE.md completely replaces the parent, but the model is additive with override on conflict.",
+    "conceptsTested": ["CLAUDE.md inheritance", "additive merging", "conflict resolution priority"]
+  },
+  {
+    "id": "d3-q03",
+    "domain": 3,
+    "taskStatement": "3.1",
+    "difficulty": "advanced",
+    "scenario": "An enterprise team uses a ~/.claude/CLAUDE.md file with personal preferences like 'respond in concise bullet points' and 'prefer functional programming patterns'. Their project's root CLAUDE.md states 'use object-oriented patterns with class-based architecture'. The project also has a src/CLAUDE.md that says 'all modules must export a default class'. A developer works on src/services/auth.ts.",
+    "question": "In what order does Claude Code resolve these three configuration sources, and which architectural pattern applies?",
+    "options": {
+      "A": "User-level (~/.claude/CLAUDE.md) has highest priority as personal preferences, so functional programming patterns apply",
+      "B": "Project root CLAUDE.md overrides everything because it represents team standards, so OOP applies but without the default class export requirement",
+      "C": "Configuration merges from user-level → project root → src/ directory, with project-level configs overriding user-level on conflicts — OOP with default class exports applies",
+      "D": "Only the src/CLAUDE.md applies because it is the closest to the file being edited"
+    },
+    "correctAnswer": "C",
+    "explanation": "Claude Code resolves CLAUDE.md in order: user-level (~/.claude/CLAUDE.md) → project root → nested directories. Project-level configurations override user-level preferences when there is a conflict, because project standards should take precedence over personal preferences in a team context. The 'functional vs OOP' conflict is resolved in favor of the project root's OOP directive, and the src/CLAUDE.md adds the default class export requirement on top. Option A reverses the priority — user preferences are lowest priority. Option B ignores the src/ level rules. Option D ignores inheritance from parent levels.",
+    "examTrap": "Option A is tempting because personal config files often have high priority in tools like Git — but Claude Code intentionally makes project rules override personal preferences to maintain team consistency.",
+    "conceptsTested": ["CLAUDE.md resolution order", "user-level vs project-level priority", "three-tier configuration"]
+  },
+  {
+    "id": "d3-q04",
+    "domain": 3,
+    "taskStatement": "3.1",
+    "difficulty": "intermediate",
+    "scenario": "A developer adds a CLAUDE.md file inside the tests/ directory with the instruction: 'When generating test files, always use vitest and include at least 3 test cases per function. Use describe/it blocks.' The root CLAUDE.md has no testing-related instructions. The developer then asks Claude Code to write tests for a utility module located in src/utils/math.ts, and the new test file will be created at tests/utils/math.test.ts.",
+    "question": "Will Claude Code apply the testing instructions from tests/CLAUDE.md when generating the test file?",
+    "options": {
+      "A": "No, because CLAUDE.md only affects files that already exist in that directory, not newly created files",
+      "B": "Yes, because the new test file's destination path (tests/utils/) falls within the tests/ directory tree, so the tests/CLAUDE.md rules apply",
+      "C": "No, because Claude Code reads CLAUDE.md based on the source file's location (src/utils/), not the destination",
+      "D": "Yes, but only if the developer explicitly tells Claude Code to check the tests/ directory configuration"
+    },
+    "correctAnswer": "B",
+    "explanation": "CLAUDE.md rules apply based on the target file's directory location. Since the new test file will be created at tests/utils/math.test.ts, it falls within the tests/ directory tree, and the tests/CLAUDE.md rules are applied. This is directory-level scoping — the configuration applies to all files within that directory subtree regardless of whether they exist yet. Option A is wrong because CLAUDE.md applies to the directory scope, not just existing files. Option C is wrong because configuration is based on the output file path, not the input file. Option D is wrong because the lookup is automatic.",
+    "examTrap": "Option C is tricky because developers might think Claude Code scopes config to the file being analyzed (src/utils/math.ts) rather than the file being written.",
+    "conceptsTested": ["directory-level config scoping", "CLAUDE.md applies to target path", "new file creation"]
+  },
+  {
+    "id": "d3-q05",
+    "domain": 3,
+    "taskStatement": "3.2",
+    "difficulty": "foundation",
+    "scenario": "A team wants to create a reusable slash command that generates boilerplate for new API endpoints. They create a file at .claude/commands/new-endpoint.md with the content: 'Create a new REST endpoint for the resource named $ARGUMENTS. Include the router, controller, service layer, and tests following our project conventions.'",
+    "question": "How does a developer invoke this custom command and pass in the resource name?",
+    "options": {
+      "A": "Type /new-endpoint users in the Claude Code prompt, where 'users' replaces $ARGUMENTS",
+      "B": "Type /commands/new-endpoint --args='users' in the Claude Code prompt",
+      "C": "Run claude --command new-endpoint --arguments users from the terminal",
+      "D": "Add the resource name to a .claude/commands/new-endpoint.args file"
+    },
+    "correctAnswer": "A",
+    "explanation": "Custom slash commands in Claude Code are invoked by typing / followed by the command filename (without .md extension), then the arguments as free text. The $ARGUMENTS placeholder in the markdown file is replaced with whatever text the user provides after the command name. So /new-endpoint users would substitute 'users' into the template. Option B invents a flag-based syntax that does not exist. Option C confuses CLI flags with the interactive slash command system. Option D invents a separate args file that does not exist.",
+    "examTrap": "Option B looks plausible because many CLI tools use --args style flags, but slash commands use simple positional text replacement via $ARGUMENTS.",
+    "conceptsTested": ["custom slash commands", "$ARGUMENTS placeholder", ".claude/commands/ directory"]
+  },
+  {
+    "id": "d3-q06",
+    "domain": 3,
+    "taskStatement": "3.2",
+    "difficulty": "intermediate",
+    "scenario": "A team creates two custom slash commands. The first is .claude/commands/review.md containing 'Review the code in $ARGUMENTS for security vulnerabilities, focusing on injection attacks, auth bypasses, and data exposure.' The second is .claude/commands/migrate-db.md containing 'Generate a database migration for the following change: $ARGUMENTS. Use our Prisma schema conventions and create both up and down migrations.' A new developer notices these commands appear when they type / in Claude Code.",
+    "question": "What is the primary benefit of defining these workflows as custom slash commands rather than typing the instructions manually each time?",
+    "options": {
+      "A": "Custom slash commands execute faster because they are pre-compiled by Claude Code",
+      "B": "They encode team-specific workflows as reusable, version-controlled prompt templates that ensure consistency across all developers",
+      "C": "They bypass Claude's context window limits by loading instructions in a separate memory space",
+      "D": "They provide access to privileged APIs that are not available through normal prompts"
+    },
+    "correctAnswer": "B",
+    "explanation": "Custom slash commands serve as shared, version-controlled prompt templates stored in the repository. They ensure every team member follows the same workflow patterns — the review command always checks the same vulnerability categories, and the migration command always follows the same conventions. Since they live in .claude/commands/, they are tracked in Git and reviewed like any other code. Option A is wrong because there is no compilation step. Option C is wrong because the commands are injected into the normal context window. Option D is wrong because slash commands do not unlock special API access.",
+    "examTrap": "Option C sounds plausible because developers often worry about context limits, but slash command content is simply inserted into the regular prompt — it uses normal context window space.",
+    "conceptsTested": ["custom slash commands as team workflows", "version-controlled prompts", "consistency across developers"]
+  },
+  {
+    "id": "d3-q07",
+    "domain": 3,
+    "taskStatement": "3.2",
+    "difficulty": "advanced",
+    "scenario": "A platform team creates a custom slash command at .claude/commands/deploy-check.md that reads: 'Analyze the current branch diff against main. For each changed file: 1) Check for breaking API changes, 2) Verify backward compatibility, 3) Ensure database migrations are reversible. Report findings as a structured checklist. Changed files to analyze: $ARGUMENTS'. A developer types /deploy-check without providing any arguments.",
+    "question": "What happens when $ARGUMENTS is not provided by the user?",
+    "options": {
+      "A": "Claude Code throws an error and refuses to execute the command until arguments are provided",
+      "B": "$ARGUMENTS is replaced with an empty string, so Claude proceeds with the rest of the prompt but without specific file context — it may infer files from the branch diff instruction",
+      "C": "Claude Code prompts the user interactively to provide the required arguments before proceeding",
+      "D": "$ARGUMENTS is left as the literal string '$ARGUMENTS' in the prompt, and Claude interprets it as a variable name"
+    },
+    "correctAnswer": "B",
+    "explanation": "$ARGUMENTS is a simple text substitution placeholder. When no arguments are provided, it resolves to an empty string. The command still executes — Claude receives the prompt with an empty string where $ARGUMENTS was and uses the remaining instructions to infer what to do. In this case, the 'analyze current branch diff against main' instruction still gives Claude enough context to proceed meaningfully. Option A is wrong because there is no required-arguments validation. Option C is wrong because slash commands do not have interactive argument prompting. Option D is wrong because the placeholder is always substituted, never left as literal text.",
+    "examTrap": "Option C seems reasonable because many CLI tools prompt for missing required arguments, but Claude Code's slash commands use simple string substitution with no validation layer.",
+    "conceptsTested": ["$ARGUMENTS substitution behavior", "empty arguments handling", "slash command execution model"]
+  },
+  {
+    "id": "d3-q08",
+    "domain": 3,
+    "taskStatement": "3.3",
+    "difficulty": "foundation",
+    "scenario": "A project has sensitive infrastructure code in the infra/ directory. The team wants Claude Code to always treat files in infra/ as read-only and never modify them directly. They create a file at .claude/rules/infra-readonly.md with the content: 'Files in the infra/ directory are managed by the platform team. Never modify these files directly. Instead, suggest changes as comments or propose them in a separate document.' They also include a glob pattern to scope this rule.",
+    "question": "What is the correct way to scope this rule so it only applies to files within the infra/ directory?",
+    "options": {
+      "A": "Add a front-matter glob pattern like 'globs: infra/**' at the top of the rule file to scope it to the infra/ directory",
+      "B": "Name the rule file infra-readonly.md and Claude Code automatically scopes it to the infra/ directory based on the filename",
+      "C": "Place the rule file inside the infra/ directory itself instead of .claude/rules/",
+      "D": "Add a 'directory: infra/' field in the project's CLAUDE.md to link the rule"
+    },
+    "correctAnswer": "A",
+    "explanation": "Path-specific rules in .claude/rules/ use glob patterns to define their scope. By adding a front-matter section with 'globs: infra/**', the rule only activates when Claude Code is working with files matching that pattern. This keeps all rules centralized in .claude/rules/ while precisely targeting specific paths. Option B is wrong because filenames do not determine scope — glob patterns do. Option C is wrong because .claude/rules/ is the designated location for rules, not arbitrary directories. Option D invents a linking mechanism that does not exist.",
+    "examTrap": "Option C seems logical — putting the rule in the directory it protects — but .claude/rules/ is the canonical location for all path-scoped rules, using globs for targeting.",
+    "conceptsTested": ["path-specific rules", "glob patterns in .claude/rules/", "scoped configuration"]
+  },
+  {
+    "id": "d3-q09",
+    "domain": 3,
+    "taskStatement": "3.3",
+    "difficulty": "intermediate",
+    "scenario": "A team creates multiple rule files in .claude/rules/: (1) api-conventions.md scoped with 'globs: src/api/**/*.ts' requiring all API handlers to use async/await, (2) test-conventions.md scoped with 'globs: **/*.test.ts' requiring all tests to use describe/it blocks, and (3) general-style.md with no glob pattern specifying general code style preferences. A developer asks Claude Code to modify src/api/users.test.ts.",
+    "question": "Which rules does Claude Code apply when editing this file?",
+    "options": {
+      "A": "Only api-conventions.md because the file is in src/api/ and more specific path rules override broader ones",
+      "B": "Only test-conventions.md because *.test.ts is the most specific pattern match for the filename",
+      "C": "All three rules apply — api-conventions.md and test-conventions.md both match the file path, and general-style.md has no glob restriction so it applies globally",
+      "D": "Only general-style.md applies because rules without glob patterns take precedence over scoped rules"
+    },
+    "correctAnswer": "C",
+    "explanation": "Rules in .claude/rules/ are additive — all rules whose glob patterns match the target file are applied together. The file src/api/users.test.ts matches 'src/api/**/*.ts' (api-conventions) and '**/*.test.ts' (test-conventions). Rules without glob patterns apply to all files globally. There is no 'most specific wins' exclusion — all matching rules contribute. Option A and B incorrectly assume only one rule can match. Option D inverts the actual behavior — unscoped rules do not override scoped ones.",
+    "examTrap": "Options A and B both assume CSS-like specificity where the most specific selector wins — but .claude/rules/ uses additive matching where all matching rules apply simultaneously.",
+    "conceptsTested": ["additive rule matching", "multiple glob patterns", "global vs scoped rules"]
+  },
+  {
+    "id": "d3-q10",
+    "domain": 3,
+    "taskStatement": "3.3",
+    "difficulty": "advanced",
+    "scenario": "A large organization has a shared .claude/rules/ directory with 15 rule files covering different parts of their codebase. A developer notices that when editing a file deep in the project (src/modules/payments/stripe/webhook.ts), Claude Code seems to be following rules from unrelated areas like 'frontend-components.md' scoped to 'globs: src/components/**/*.tsx'. The developer suspects the glob patterns are too broad.",
+    "question": "What is the most likely explanation and how should the team fix it?",
+    "options": {
+      "A": "Claude Code has a bug that applies all rules regardless of glob patterns — file an issue with the Claude Code team",
+      "B": "Some rule files may be missing glob patterns entirely, making them global rules that apply to every file — audit all rule files and add appropriate globs to scope them",
+      "C": "The 15 rule files exceed Claude Code's rule limit, causing fallback to applying all rules — reduce the number of rule files",
+      "D": "Glob patterns only filter by file extension, not directory path — restructure rules to use extension-based scoping"
+    },
+    "correctAnswer": "B",
+    "explanation": "Rules without glob patterns apply globally to all files. If some rule files are missing their glob front-matter, they become unscoped and affect every file Claude Code touches. The fix is to audit all .claude/rules/ files and ensure each has appropriate glob patterns — rules meant for specific paths should always include a glob. Option A is unlikely because glob-scoped rules are well-tested. Option C is wrong because there is no documented limit on rule file count. Option D is wrong because glob patterns fully support directory path matching (e.g., src/components/**).",
+    "examTrap": "Option C seems plausible because developers often assume tools have configuration limits, but the actual issue is much simpler — missing glob patterns make rules global.",
+    "conceptsTested": ["unscoped rules apply globally", "glob pattern auditing", "rule debugging"]
+  },
+  {
+    "id": "d3-q11",
+    "domain": 3,
+    "taskStatement": "3.4",
+    "difficulty": "foundation",
+    "scenario": "A developer is about to refactor a large authentication module that touches 12 files across the codebase. Before making any changes, they want Claude Code to analyze the codebase, identify all affected files, and produce a step-by-step refactoring plan without modifying any code yet.",
+    "question": "Which Claude Code mode should the developer use for this planning phase?",
+    "options": {
+      "A": "Direct mode, because it is faster and will complete the refactoring in one pass",
+      "B": "Plan mode, because it produces a structured plan for review without making any file changes",
+      "C": "Debug mode, which is specifically designed for analyzing code before making changes",
+      "D": "Read-only mode, which prevents all file writes while allowing analysis"
+    },
+    "correctAnswer": "B",
+    "explanation": "Plan mode is designed for exactly this use case — analyzing a complex task and producing a detailed plan without making any changes to the codebase. The developer can review the plan, ask for modifications, and only proceed to implementation once satisfied. This is especially valuable for large refactors where understanding the scope is critical before committing to changes. Option A would skip the planning phase and immediately modify files. Option C and D are not real Claude Code modes.",
+    "examTrap": "Option A is tempting for experienced developers who trust Claude Code, but the exam emphasizes that plan mode is the correct approach for complex multi-file changes — review before execution.",
+    "conceptsTested": ["plan mode purpose", "plan vs direct mode", "when to use plan mode"]
+  },
+  {
+    "id": "d3-q12",
+    "domain": 3,
+    "taskStatement": "3.4",
+    "difficulty": "intermediate",
+    "scenario": "A developer is working in Claude Code and has been going back and forth between planning and executing changes. They are currently in plan mode reviewing an approach for database schema changes. They realize the plan looks correct and want to quickly switch to direct mode to start implementing without leaving the current session or retyping their request.",
+    "question": "What is the fastest way to toggle from plan mode to direct mode in Claude Code?",
+    "options": {
+      "A": "Type /mode direct to switch modes via a slash command",
+      "B": "Press Shift+Tab to toggle between plan mode and direct mode",
+      "C": "Exit the current session and start a new one with the --direct flag",
+      "D": "Type 'switch to direct mode' as a natural language instruction to Claude"
+    },
+    "correctAnswer": "B",
+    "explanation": "Shift+Tab is the keyboard shortcut to toggle between plan mode and direct mode in Claude Code. This allows rapid switching without interrupting the current conversation flow. It is the most efficient method because it requires no typing and preserves the full session context. Option A invents a slash command that does not exist for mode toggling. Option C is extremely wasteful — it discards the entire session context. Option D would work as a natural language instruction but is slower and less reliable than the dedicated keyboard shortcut.",
+    "examTrap": "Option D seems reasonable because Claude Code accepts natural language — but the exam tests knowledge of the specific Shift+Tab shortcut as the canonical fast-toggle mechanism.",
+    "conceptsTested": ["Shift+Tab toggle", "plan mode to direct mode", "keyboard shortcuts"]
+  },
+  {
+    "id": "d3-q13",
+    "domain": 3,
+    "taskStatement": "3.4",
+    "difficulty": "advanced",
+    "scenario": "A senior developer is mentoring a junior colleague on when to use plan mode versus direct mode in Claude Code. The junior developer asks: 'Should I always use plan mode first? It seems safer.' The senior developer explains that the choice depends on the task complexity and risk level.",
+    "question": "Which of the following best describes the correct guidance for choosing between plan mode and direct mode?",
+    "options": {
+      "A": "Always use plan mode first for every task to ensure safety, then switch to direct mode for implementation",
+      "B": "Use direct mode for well-understood, low-risk changes like fixing a typo or adding a simple function; use plan mode for complex, multi-file changes or unfamiliar codebases where understanding the approach before execution is critical",
+      "C": "Use plan mode only for documentation tasks and direct mode for all code changes",
+      "D": "Use direct mode for initial exploration and plan mode only when Claude Code suggests switching after encountering errors"
+    },
+    "correctAnswer": "B",
+    "explanation": "The choice between plan and direct mode should be based on task complexity and risk. Direct mode is efficient for small, well-understood changes where the developer is confident in the approach. Plan mode shines for complex multi-file refactors, unfamiliar codebases, or high-risk changes where reviewing the approach before execution prevents costly mistakes. Option A is overly cautious and wastes time on trivial tasks. Option C artificially limits plan mode to documentation. Option D reverses the proper workflow — planning should come before execution, not after errors.",
+    "examTrap": "Option A appeals to cautious developers, but the exam tests understanding that plan mode has overhead — using it for every trivial change is an anti-pattern that wastes time.",
+    "conceptsTested": ["plan vs direct mode decision criteria", "task complexity assessment", "risk-based mode selection"]
+  },
+  {
+    "id": "d3-q14",
+    "domain": 3,
+    "taskStatement": "3.4",
+    "difficulty": "intermediate",
+    "scenario": "A developer uses plan mode to generate a refactoring plan for converting a callback-based Node.js module to use async/await. Claude Code produces a 5-step plan. The developer reviews it and notices step 3 proposes changing a public API signature that would break downstream consumers. The developer wants to keep steps 1, 2, 4, and 5 but modify step 3 to preserve backward compatibility.",
+    "question": "What should the developer do after reviewing the plan in plan mode?",
+    "options": {
+      "A": "Accept the plan as-is and manually fix the breaking change after Claude Code implements it",
+      "B": "Provide feedback in the chat asking Claude to revise step 3 to maintain backward compatibility, then review the updated plan before switching to direct mode",
+      "C": "Reject the entire plan and write the refactoring manually since Claude Code cannot modify individual plan steps",
+      "D": "Switch to direct mode immediately and add 'but do not change public API signatures' to the implementation prompt"
+    },
+    "correctAnswer": "B",
+    "explanation": "Plan mode is designed for iterative refinement — the developer can provide feedback on any part of the plan and ask Claude to revise it. This review-revise cycle is one of the core benefits of plan mode. The developer should ask Claude to adjust step 3 to preserve backward compatibility, review the updated plan, and only then proceed to implementation. Option A creates unnecessary rework. Option C underestimates plan mode's flexibility. Option D skips the planning benefit and risks inconsistent implementation.",
+    "examTrap": "Option D seems efficient — jump to implementation with a constraint — but it bypasses the plan review cycle that catches issues like this before any code is written.",
+    "conceptsTested": ["plan mode iterative review", "feedback loop", "plan refinement before execution"]
+  },
+  {
+    "id": "d3-q15",
+    "domain": 3,
+    "taskStatement": "3.5",
+    "difficulty": "intermediate",
+    "scenario": "A developer has been working with Claude Code for 45 minutes on a complex feature. The conversation has grown very long with many back-and-forth exchanges, code snippets, and error traces. Claude Code's responses are becoming less accurate — it occasionally references earlier decisions that were already revised and seems to lose track of the current state of the codebase.",
+    "question": "What is the most effective action to restore Claude Code's response quality without losing critical context?",
+    "options": {
+      "A": "Start a completely new Claude Code session and re-explain the entire task from scratch",
+      "B": "Use the /compact command to summarize the conversation history, reducing token usage while preserving key decisions and current state",
+      "C": "Copy the last few exchanges and paste them at the end of the conversation to 'refresh' Claude's memory",
+      "D": "Increase Claude Code's context window size in the settings to accommodate the longer conversation"
+    },
+    "correctAnswer": "B",
+    "explanation": "/compact condenses the conversation history into a summary that preserves the most important context — key decisions, current file states, and the active task — while dramatically reducing token usage. This restores response quality by giving Claude Code a clean, focused context. Option A loses all accumulated context and wastes time rebuilding it. Option C duplicates content and makes the context problem worse. Option D is not a user-configurable setting — context window size is fixed by the model.",
+    "examTrap": "Option A seems safe but is extremely costly in time. The exam expects candidates to know /compact as the right tool for context management without starting over.",
+    "conceptsTested": ["/compact command", "context management", "conversation length optimization"]
+  },
+  {
+    "id": "d3-q16",
+    "domain": 3,
+    "taskStatement": "3.5",
+    "difficulty": "advanced",
+    "scenario": "A developer is using Claude Code to implement a new payment processing module. They follow this workflow: (1) ask Claude Code to write the initial implementation, (2) run the test suite and find 3 failing tests, (3) paste the error output back to Claude Code, (4) Claude Code proposes fixes, (5) run tests again and find 1 remaining failure, (6) iterate until all tests pass. After 4 iterations, all tests pass but the developer notices the code has accumulated unnecessary complexity from the fix-on-fix patches.",
+    "question": "What is the best approach to address the accumulated complexity while keeping the working solution?",
+    "options": {
+      "A": "Accept the complexity — the tests pass and refactoring might introduce new bugs",
+      "B": "Ask Claude Code to refactor the implementation now that all tests pass, using the passing test suite as a safety net to verify the refactored code remains correct",
+      "C": "Revert all changes and start the implementation from scratch with a better initial prompt",
+      "D": "Manually refactor the code without Claude Code to maintain full control over the cleanup"
+    },
+    "correctAnswer": "B",
+    "explanation": "The edit-test-fix cycle naturally accumulates patch-on-patch complexity. Once all tests pass, the passing test suite becomes a safety net for refactoring — you can ask Claude Code to clean up and simplify the implementation while running tests after each change to ensure correctness is maintained. This is the iterative refinement pattern at its best: build correctness first, then improve quality. Option A accepts technical debt unnecessarily. Option C discards working code. Option D ignores Claude Code's refactoring capabilities.",
+    "examTrap": "Option C is tempting for perfectionists, but discarding a working, tested solution is wasteful — the exam rewards understanding that iterative refinement includes a cleanup phase after achieving correctness.",
+    "conceptsTested": ["edit-test-fix cycle", "iterative refinement", "refactoring with test safety net"]
+  },
+  {
+    "id": "d3-q17",
+    "domain": 3,
+    "taskStatement": "3.5",
+    "difficulty": "foundation",
+    "scenario": "A developer is using Claude Code to build a REST API. After the initial implementation, they run the test suite and see 5 failing tests. They paste the entire test output — including 47 passing tests and 5 failures with full stack traces — into the Claude Code conversation. Claude Code then proposes changes, but some fixes seem to address the wrong test failures.",
+    "question": "What practice would improve the accuracy of Claude Code's fixes in the edit-test-fix cycle?",
+    "options": {
+      "A": "Paste only the failing test output and relevant error messages rather than the entire test suite output to keep the context focused",
+      "B": "Ask Claude Code to run the tests itself instead of pasting output manually",
+      "C": "Fix all 5 failing tests in separate Claude Code sessions to avoid confusion",
+      "D": "Increase the number of test retries so transient failures are filtered out automatically"
+    },
+    "correctAnswer": "A",
+    "explanation": "Feeding only the relevant failure information keeps Claude Code's context focused and reduces the chance of misinterpreting which test needs which fix. Including 47 passing tests dilutes the signal with noise. Best practice in the edit-test-fix cycle is to provide targeted error context — the failing test names, error messages, and relevant stack traces — rather than dumping the entire test run output. Option B may not always be feasible depending on environment setup. Option C is extremely inefficient. Option D addresses flaky tests, not logic errors.",
+    "examTrap": "Option B sounds ideal but assumes Claude Code always has direct test execution access — the exam focuses on the developer's responsibility to curate context effectively.",
+    "conceptsTested": ["edit-test-fix cycle", "context curation", "focused error reporting"]
+  },
+  {
+    "id": "d3-q18",
+    "domain": 3,
+    "taskStatement": "3.6",
+    "difficulty": "intermediate",
+    "scenario": "A DevOps team wants to integrate Claude Code into their CI/CD pipeline to automatically review pull requests for security vulnerabilities. The CI environment is a headless Linux container with no TTY. They attempt to run Claude Code interactively but it fails because there is no terminal to accept user input.",
+    "question": "How should the team run Claude Code in their CI/CD pipeline?",
+    "options": {
+      "A": "Attach a virtual TTY to the container using a screen or tmux session",
+      "B": "Use Claude Code's non-interactive mode by piping the prompt via stdin or using the -p flag, which outputs results directly without requiring user interaction",
+      "C": "Install a GUI wrapper that simulates interactive input for Claude Code",
+      "D": "Configure the CI environment to auto-accept all Claude Code prompts by setting CLAUDE_AUTO_ACCEPT=true"
+    },
+    "correctAnswer": "B",
+    "explanation": "Claude Code supports non-interactive mode specifically for CI/CD and automation scenarios. Using the -p flag (or piping input via stdin), the tool accepts a prompt, processes it, and outputs results without requiring interactive input. This is the standard approach for headless environments. Option A is an unnecessary workaround that adds complexity. Option C is impractical in a container environment. Option D invents an environment variable that is not the primary mechanism for CI/CD integration.",
+    "examTrap": "Option D sounds plausible because many CLI tools use environment variables for automation — but the exam specifically tests knowledge of the -p flag for non-interactive mode.",
+    "conceptsTested": ["non-interactive mode", "CI/CD integration", "-p flag for automation"]
+  },
+  {
+    "id": "d3-q19",
+    "domain": 3,
+    "taskStatement": "3.6",
+    "difficulty": "advanced",
+    "scenario": "A team sets up an automated workflow where Claude Code runs in CI to generate pull requests for dependency updates. The workflow: (1) CI detects outdated dependencies weekly, (2) Claude Code runs in non-interactive mode to update package versions, run tests, and fix any breaking changes, (3) Claude Code creates a PR with the changes and a detailed description. The team wants to ensure the automated PRs follow their contribution guidelines and include proper commit messages.",
+    "question": "What is the best way to ensure Claude Code follows team conventions when generating automated PRs in CI?",
+    "options": {
+      "A": "Include all conventions in the CI script's prompt string — repeat the guidelines every time Claude Code runs",
+      "B": "Rely on team members to manually review and fix any convention violations in the automated PRs",
+      "C": "Configure CLAUDE.md and .claude/rules/ in the repository with the team's conventions — Claude Code reads these automatically even in non-interactive mode",
+      "D": "Create a separate configuration file specific to CI mode that overrides the project's normal CLAUDE.md"
+    },
+    "correctAnswer": "C",
+    "explanation": "CLAUDE.md and .claude/rules/ are read automatically by Claude Code regardless of whether it runs interactively or in non-interactive mode. By encoding team conventions (commit message format, PR description templates, coding standards) in these project-level configuration files, the automated CI workflow inherits the same rules that developers follow interactively. Option A is fragile and hard to maintain. Option B defeats the purpose of automation. Option D invents a CI-specific override mechanism that does not exist — the same config files apply in all modes.",
+    "examTrap": "Option A seems like the most explicit approach, but it duplicates configuration and becomes a maintenance burden — the exam rewards understanding that CLAUDE.md works identically in interactive and non-interactive modes.",
+    "conceptsTested": ["CI/CD integration", "CLAUDE.md in non-interactive mode", "automated PR generation"]
+  },
+  {
+    "id": "d3-q20",
+    "domain": 3,
+    "taskStatement": "3.6",
+    "difficulty": "foundation",
+    "scenario": "A small startup wants to use Claude Code to automate code review on every pull request. They set up a GitHub Actions workflow that triggers on PR events. The workflow checks out the PR branch, runs Claude Code with the prompt 'Review this PR for bugs and suggest improvements', and posts the review as a PR comment. The team is concerned about Claude Code making unauthorized changes to the codebase during the automated review.",
+    "question": "How should the team ensure Claude Code only reviews code and does not make changes during the automated CI review?",
+    "options": {
+      "A": "Set file system permissions to read-only for the Claude Code process in the CI container",
+      "B": "Include explicit instructions in the prompt telling Claude Code not to modify any files, and verify the git working tree is clean after the run",
+      "C": "Run Claude Code in a Docker container without write access to the workspace volume",
+      "D": "Use a separate Claude Code API key that has read-only permissions"
+    },
+    "correctAnswer": "B",
+    "explanation": "The most practical approach combines clear prompt instructions ('review only, do not modify files') with a verification step (checking git status after the run to confirm no files were changed). This leverages Claude Code's instruction-following capability while adding a safety check. Option A and C are overly restrictive infrastructure approaches that may prevent Claude Code from functioning properly (it may need temp file access). Option D is wrong because API keys do not have read/write permission granularity for file operations.",
+    "examTrap": "Options A and C seem like the safest infrastructure approaches, but they can interfere with Claude Code's normal operation — the exam favors the prompt-based approach with verification.",
+    "conceptsTested": ["automated code review", "non-interactive mode safety", "CI/CD guardrails"]
+  }
+]
