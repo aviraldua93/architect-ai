@@ -138,36 +138,36 @@ export const TASK_STATEMENT_NAMES: Record<string, string> = {
   "1.2": "Multi-Agent Orchestration",
   "1.3": "Subagent Invocation",
   "1.4": "Workflow Enforcement",
-  "1.5": "SDK Hooks",
+  "1.5": "Agent SDK Hooks",
   "1.6": "Task Decomposition",
   "1.7": "Session State",
-  // Domain 2 — Tool Design & MCP
-  "2.1": "Tool Descriptions",
-  "2.2": "Tool Choice Modes",
-  "2.3": "Error Handling Schemas",
-  "2.4": "MCP Architecture",
-  "2.5": "Built-in Tools",
-  // Domain 3 — CLI & Commands
+  // Domain 2 — Tool Design & MCP Integration
+  "2.1": "Tool Descriptions as Selection Mechanism",
+  "2.2": "Structured Error Responses",
+  "2.3": "Tool Choice Modes",
+  "2.4": "MCP Resources, Tools & Prompts",
+  "2.5": "Built-in vs Custom Tools",
+  // Domain 3 — Claude Code Configuration & Workflows
   "3.1": "CLAUDE.md Hierarchy",
-  "3.2": "Custom Slash Commands",
-  "3.3": "Path-Specific Rules",
-  "3.4": "Plan Mode",
+  "3.2": "Slash Commands & Skills",
+  "3.3": "Path Rules with Glob Patterns",
+  "3.4": "Plan Mode Workflow",
   "3.5": "Iterative Refinement",
   "3.6": "CI/CD Integration",
-  // Domain 4 — Prompt Engineering
-  "4.1": "Explicit Criteria",
+  // Domain 4 — Prompt Engineering & Structured Output
+  "4.1": "Explicit Criteria & Rubrics",
   "4.2": "Few-Shot Examples",
-  "4.3": "Structured Output",
-  "4.4": "Validation-Retry",
+  "4.3": "Tool Use Schemas & Validation",
+  "4.4": "Validation-Retry Pattern",
   "4.5": "Batch API",
-  "4.6": "Multi-Instance Review",
-  // Domain 5 — Context Management
-  "5.1": "Context Preservation",
-  "5.2": "Escalation Patterns",
-  "5.3": "Error Propagation",
-  "5.4": "Codebase Exploration",
-  "5.5": "Human Review",
-  "5.6": "Provenance",
+  "4.6": "Multi-Instance Review & Aggregation",
+  // Domain 5 — Context Management & Reliability
+  "5.1": "Context Preservation & Summarisation",
+  "5.2": "Escalation Patterns & Confidence",
+  "5.3": "Error Propagation in Multi-Agent Systems",
+  "5.4": "Codebase Exploration Strategies",
+  "5.5": "Human-in-the-Loop & Approval Gates",
+  "5.6": "Provenance & Audit Trails",
 };
 
 /** Domain weights for exam scoring (percentage of total). */
