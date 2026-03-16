@@ -1,247 +1,159 @@
-# architect-ai - Claude Code Project
+# ArchitectAI — Claude Certified Architect Study Tool
 
-AI-powered study tool for Claude Certified Architect exam. **The codebase IS the curriculum.**
+AI-powered study tool for the Claude Certified Architect (Foundations) exam. **The codebase IS the curriculum** — every architectural pattern the exam tests is implemented here.
 
-## Project Overview
+## Architecture
 
-architect-ai is an intelligent study platform that combines:
-- **Agentic Architecture**: Multi-agent systems orchestration for teaching Claude Certified Architect exam concepts
-- **Tool Design & MCP Integration**: Extensible tool framework with Model Context Protocol support
-- **CLI & Commands**: Interactive learning interface
-- **Prompt Engineering**: Dynamic, contextual learning prompts
-- **Context Management**: Intelligent context window optimization
-- **Content System**: Pre-loaded question banks, explanations, and practice scenarios
+Three-tier architecture, each tier adding capability:
 
-## Core Domains
+| Tier | Name | Description |
+|------|------|-------------|
+| 1 | Offline CLI | Question bank, study mode, mock exams — no API key required |
+| 2 | MCP Server | Expose study tools via Model Context Protocol for Claude Desktop |
+| 3 | BYOK Live Agents | Bring-your-own-key agentic workflows with real Claude API calls |
 
-### Domain 1: Agentic Architecture (`src/agents/`)
-Teaches multi-agent patterns and orchestration:
-- Agent base classes and communication protocols
-- Multi-agent workflow patterns
-- State management and coordination
-- Error recovery and resilience patterns
+### Key Patterns
 
-### Domain 2: Tool Design & MCP Integration (`src/tools/`, `src/mcp/`)
-Teaches tool design and Model Context Protocol:
-- Tool abstraction and interfaces
-- MCP protocol implementation
-- Tool registry and discovery
-- Tool validation and versioning
+- **Hub-and-spoke coordination**: Coordinator agent controls all subagent communication
+- **Subagent isolation**: Subagents never share state — explicit context passing only
+- **Agentic loops with `stop_reason`**: Loops terminate on `end_turn`, not arbitrary limits
+- **Programmatic workflow enforcement**: Workflows enforced via code, not prompt instructions
 
-### Domain 3: CLI & Commands (`src/cli/`)
-Teaches command-line interface design:
-- Command parser and router
-- Interactive prompts and user interaction
-- Help system and documentation
-- Command history and replay
+## Exam Domains
 
-### Domain 4: Prompt Engineering (`src/prompts/`)
-Teaches prompt optimization techniques:
-- Prompt templates and generation
-- Few-shot learning patterns
-- Chain-of-thought prompting
-- Dynamic prompt adjustment
+| Domain | Name | Weight | Source |
+|--------|------|--------|--------|
+| 1 | Agentic Architecture & Orchestration | 27% | `src/agents/` |
+| 2 | Tool Design & MCP Integration | 18% | `src/tools/`, `src/mcp/` |
+| 3 | Claude Code Configuration & Workflows | 20% | `src/cli/`, `.claude/` |
+| 4 | Prompt Engineering & Structured Output | 20% | `src/prompts/` |
+| 5 | Context Management & Reliability | 15% | `src/context/` |
 
-### Domain 5: Context Management (`src/context/`)
-Teaches token and context optimization:
-- Context window management
-- Token counting and tracking
-- Context prioritization strategies
-- Serialization and versioning
+### Task Statements
 
-### Content & Assessment (`src/content/`)
-Pre-generated curriculum:
-- **questions/**: AWS certification question banks (JSON)
-- **explanations/**: Detailed concept explanations
-- **scenarios/**: Practical learning scenarios
+**Domain 1 — Agentic Architecture & Orchestration**
+1.1 Agentic Loops · 1.2 Multi-Agent Orchestration · 1.3 Subagent Invocation · 1.4 Workflow Enforcement · 1.5 Agent SDK Hooks · 1.6 Task Decomposition · 1.7 Session State
 
-### Testing Infrastructure (`test/`)
-- **tier1/**: Free static analysis (linting, type checking)
-- **tier2/**: Paid E2E tests (integration testing)
-- **tier3/**: LLM-as-judge evaluation (advanced assessment)
+**Domain 2 — Tool Design & MCP Integration**
+2.1 Tool Descriptions as Selection Mechanism · 2.2 Structured Error Responses · 2.3 Tool Choice Modes · 2.4 MCP Resources, Tools & Prompts · 2.5 Built-in vs Custom Tools
 
-## Getting Started
+**Domain 3 — Claude Code Configuration & Workflows**
+3.1 CLAUDE.md Hierarchy · 3.2 Slash Commands & Skills · 3.3 Path Rules with Glob Patterns · 3.4 Plan Mode Workflow · 3.5 Iterative Refinement · 3.6 CI/CD Integration
 
-### Prerequisites
-- Node.js 18+
-- Bun (optional, for faster builds)
-- GitHub CLI (for cloning/pushing)
+**Domain 4 — Prompt Engineering & Structured Output**
+4.1 Explicit Criteria & Rubrics · 4.2 Few-Shot Examples · 4.3 Tool Use Schemas & Validation · 4.4 Validation-Retry Pattern · 4.5 Batch API · 4.6 Multi-Instance Review & Aggregation
 
-### Installation
-```bash
-# Clone the repository
-gh repo clone aviraldua93/architect-ai
+**Domain 5 — Context Management & Reliability**
+5.1 Context Preservation & Summarisation · 5.2 Escalation Patterns & Confidence · 5.3 Error Propagation in Multi-Agent Systems · 5.4 Codebase Exploration Strategies · 5.5 Human-in-the-Loop & Approval Gates · 5.6 Provenance & Audit Trails
 
-cd architect-ai
+## Content System
 
-# Install dependencies
-npm install
+105 questions across 5 domains, stored as Zod-validated JSON in `src/content/questions/`. Each question includes:
 
-# Build TypeScript
-npm run build
+- Scenario (≥50 chars), question text, four options (A–D)
+- Correct answer, explanation (≥30 chars), exam trap, concepts tested
+- Question IDs follow pattern: `d{domain}-q{number}` (e.g. `d1-q01`)
+- Difficulty: `foundation` | `intermediate` | `advanced`
 
-# Run tests
-npm run test
-```
+## Commands
 
-### Development
+| Command | Purpose |
+|---------|---------|
+| `npm start` | Launch CLI (interactive menu) |
+| `npm run quiz` | Quick quiz mode |
+| `npm run study` | Study mode with explanations |
+| `npm run assess` | Assessment / diagnostic |
+| `npm run dev` | Watch mode (auto-reload on changes) |
+| `npm run build` | Compile TypeScript (`tsc`) |
+| `npm run typecheck` | Type-check without emitting (`tsc --noEmit`) |
+| `npm run lint` | Lint via type-check (`tsc --noEmit`) |
+| `npm test` | Run Tier 1 tests (`bun test test/tier1/`) |
+
+### Running Directly
 
 ```bash
-# Type-aware development with live recompilation
-npm run dev
-
-# Format code
-npm run format
-
-# Lint and type-check
-npm run lint
-npm run type-check
+npx tsx src/cli/index.ts quiz           # Quick quiz
+npx tsx src/cli/index.ts quiz -d 1      # Domain 1 only
+npx tsx src/cli/index.ts quiz -t 1.3    # Task 1.3 only
+npx tsx src/cli/index.ts study          # Study mode
+npx tsx src/cli/index.ts assess         # Assessment
 ```
 
 ## Project Structure
 
 ```
 architect-ai/
-├── CLAUDE.md                    # This file - Claude Code config
-├── conductor.json               # Workspace hooks (gstack pattern)
-├── VERSION                      # 0.1.0.0
-├── CHANGELOG.md                 # Version history
-├── TODOS.md                     # Project backlog
-├── package.json                 # Node/Bun project
-├── tsconfig.json                # TypeScript config
-├── .gitignore                   # Git ignore rules
+├── CLAUDE.md                    # This file — project configuration for Claude
+├── package.json                 # Node.js project (tsx, vitest, zod, @anthropic-ai/sdk)
+├── tsconfig.json                # TypeScript strict mode
+├── VERSION                      # Semantic version
+├── CHANGELOG.md                 # Release history
 │
 ├── src/
-│   ├── agents/                  # Domain 1: Agentic Architecture
-│   │   └── TODO.md              # Agent patterns and implementations
-│   │
+│   ├── agents/                  # Domain 1: Agentic Architecture & Orchestration
 │   ├── tools/                   # Domain 2: Tool Design
-│   │   └── TODO.md              # Tool abstraction and registry
-│   │
 │   ├── mcp/                     # Domain 2: MCP Integration
-│   │   └── TODO.md              # MCP client and server
-│   │
+│   ├── cli/                     # Domain 3: CLI framework
+│   ├── config/                  # Application configuration
 │   ├── prompts/                 # Domain 4: Prompt Engineering
-│   │   └── TODO.md              # Prompt templates and generation
-│   │
 │   ├── context/                 # Domain 5: Context Management
-│   │   └── TODO.md              # Context window optimization
-│   │
-│   ├── cli/                     # Domain 3: CLI & Commands
-│   │   └── TODO.md              # CLI framework and commands
-│   │
-│   └── content/                 # Pre-generated curriculum
-│       ├── questions/           # AWS exam question banks (JSON)
-│       ├── explanations/        # Concept explanations
-│       └── scenarios/           # Practice scenarios
+│   ├── content/                 # Question bank (Zod-validated JSON)
+│   │   └── questions/           # 105 questions across 5 domains
+│   └── types/                   # Single source of truth for shared types
+│       └── index.ts             # DOMAIN_NAMES, TASK_STATEMENT_NAMES, Question, etc.
 │
-├── .claude/
-│   ├── commands/                # Custom slash commands
-│   │   └── example.md           # TODO: Document commands
-│   │
-│   └── rules/                   # Path-specific rules
-│       └── engineering.md       # TODO: Development rules
-│
-├── scripts/                     # Build and utility scripts
-│   └── TODO.md                  # Build scripts
+├── web/                         # Next.js 14 web application (App Router + Tailwind)
 │
 ├── test/
-│   ├── tier1/                   # Free static analysis
-│   │   └── README.md            # Linting, type checking
-│   │
-│   ├── tier2/                   # Paid E2E tests
-│   │   └── README.md            # Integration tests
-│   │
-│   └── tier3/                   # LLM-as-judge evaluation
-│       └── README.md            # Advanced assessment
+│   ├── tier1/                   # Free, <5 seconds, runs on every PR
+│   ├── tier2/                   # E2E with real API calls (gated by label)
+│   └── tier3/                   # LLM-as-judge quality checks (gated by label)
 │
-└── docs/                        # Architecture & contributor docs
-    ├── ARCHITECTURE.md          # TODO: System design
-    ├── API.md                   # TODO: API documentation
-    ├── CONTRIBUTING.md          # TODO: Contributor guide
-    └── DEVELOPMENT.md           # TODO: Dev setup guide
+├── docs/                        # Architecture & contributor documentation
+│
+└── .claude/
+    ├── commands/                # Slash commands (/quiz, /study, /exam, /status)
+    ├── rules/                   # Path-specific engineering rules
+    └── roles/                   # Persona definitions for Claude sessions
 ```
 
-## Key Commands
+## Testing
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | TypeScript watch mode (development) |
-| `npm run build` | Compile TypeScript to JavaScript |
-| `npm run lint` | Run ESLint (code quality) |
-| `npm run type-check` | Run TypeScript type checking |
-| `npm run format` | Format code with Prettier |
-| `npm run test:tier1` | Run free static analysis tests |
-| `npm run test:tier2` | Run paid E2E tests (TODO) |
-| `npm run test:tier3` | Run LLM-as-judge evaluation (TODO) |
-| `npm run test` | Run tier1 tests (default) |
+Three-tier testing strategy:
 
-## Claude Code Integration
+| Tier | Scope | Speed | Gate |
+|------|-------|-------|------|
+| 1 | Type-checking, schema validation, unit tests | <5 seconds | Every PR |
+| 2 | End-to-end with real API calls | Minutes | Label-gated |
+| 3 | LLM-as-judge quality evaluation | Minutes | Label-gated |
 
-This project uses Claude Code project configuration for enhanced:
-- **Intelligent code navigation** and search
-- **Multi-file aware edits** across domains
-- **Context-aware suggestions** based on project structure
-- **Custom slash commands** for common workflows
-- **Path-specific rules** for domain separation
-- **Memory** of past interactions and decisions
+```bash
+npm test                         # Tier 1 (default)
+npm run typecheck                # Type-check only
+```
 
-### Commands (in Claude UI)
+## The `.claude/` Folder
 
-- `/help` - Show available commands
-- `/status` - Project status and next steps
-- `/arch` - Show architecture overview
-- `/test` - Run test suite
-- `/build` - Build the project
+The `.claude/` directory configures Claude's behaviour within this project:
 
-### Rules
+- **`commands/`** — Slash commands available in Claude sessions (e.g. `/quiz`, `/study`, `/exam`, `/status`). Each `.md` file defines a command's purpose, usage, and implementation.
+- **`rules/`** — Path-specific engineering rules applied automatically when Claude edits files matching glob patterns. Enforces coding standards, naming conventions, and domain-specific patterns.
+- **`roles/`** — Persona definitions that give Claude specific expertise and context for different tasks (e.g. Domain Engineer, Technical Writer).
 
-Path-specific rules ensure consistent patterns:
-- `src/agents/**` - Agent patterns must follow multi-agent standards
-- `src/tools/**` - Tool implementations must be MCP-compatible
-- `src/prompts/**` - Prompts must be versioned and tested
-- `test/**` - Tests organized by tier (free/paid/advanced)
+## Tech Stack
 
-## Architecture Principles
+- **Runtime**: Node.js 18+ with tsx for TypeScript execution
+- **Language**: TypeScript (strict mode)
+- **Testing**: Vitest + Bun test runner
+- **Validation**: Zod schemas for all content
+- **AI SDK**: @anthropic-ai/sdk for Tier 3 live agents
+- **Web**: Next.js 14, Tailwind CSS, App Router
+- **Protocol**: Model Context Protocol (MCP) for tool integration
 
-1. **Domain-Driven Design**: Each domain (agents, tools, prompts, context, cli) is independently deployable
-2. **Contract-First**: Tool interfaces defined before implementation (MCP protocol)
-3. **Testability**: Three-tier testing approach (static → E2E → LLM evaluation)
-4. **Extensibility**: Plugin architecture for tools and agents
-5. **Observability**: Structured logging and metrics for all components
-
-## Contributing
-
-See [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for:
-- Development setup
-- Code style guidelines
-- Pull request process
-- Domain-specific patterns
-
-## Next Steps
-
-1. ✅ Project initialization and scaffolding
-2. ⏳ Implement core agent base classes
-3. ⏳ Design tool interface contracts
-4. ⏳ Integrate MCP protocol support
-5. ⏳ Build CLI framework
-6. ⏳ Create prompt templates
-7. ⏳ Load initial question banks
-8. ⏳ Set up Tier 1 test infrastructure
-
-## License
+## Licence
 
 MIT
 
 ## Author
 
-Fatima Al-Rashid, DevOps & CI Engineer at ArchitectAI
-
----
-
-**Memory Notes:**
-- Project initialized with gstack conductor pattern
-- TypeScript configured for ES2020 target
-- Three-tier testing strategy in place
-- Domain separation enforced via src/ structure
-- GitHub CLI used for remote repository management
+ArchitectAI Team
