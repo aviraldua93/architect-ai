@@ -15,20 +15,21 @@ ArchitectAI is an open-source study tool for the [Claude Certified Architect (Fo
 
 You don't just *read* about agentic loops — you see a production implementation in `src/agents/loop.ts`. You don't just *memorise* hook patterns — you see `PostToolUse` normalisation running live in `src/agents/hooks.ts`.
 
-> 🆓 **No API key required for Tier 1.** 105 practice questions, full CLI quiz — completely free and offline.
+> 🆓 **No API key required for Tier 1.** 162 practice questions, CLI quiz, timed exam simulation, spaced repetition — completely free and offline.
 
 ## Feature Status
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| CLI Quiz (`quiz`) | ✅ Shipped | 105 questions across all 5 domains |
+| CLI Quiz (`quiz`) | ✅ Shipped | 132 questions across all 5 domains |
+| Timed Exam Simulation (`exam`) | ✅ Shipped | 60-question mock exam, 120-min timer, domain-weighted, 720/1000 pass threshold |
+| Adaptive Study (`study`) | ✅ Shipped | SM-2 spaced repetition, domain filtering, source code references |
+| Exam Readiness (`assess`) | ✅ Shipped | Per-domain scoring, weak area identification, study recommendations |
+| Progress Dashboard (`dashboard`) | ✅ Shipped | Terminal dashboard with domain bars, streak tracking, SRS due count |
+| Web UI | ✅ Shipped | Next.js app at `localhost:3939` — quiz with filters, dashboard, dark mode, mobile-responsive |
 | MCP Server | ✅ Shipped | Full JSON-RPC 2.0 server with resources, tools, and prompts |
-| Web UI | 🚧 In Progress | Next.js app with quiz, study, exam, and dashboard pages |
-| CLI Study Mode (`study`) | 🚧 Coming Soon | Interactive guided study sessions |
-| CLI Assessment (`assess`) | 🚧 Coming Soon | Readiness scoring and gap analysis |
-| Timed Exam Simulation | 🚧 Coming Soon | Full mock exam with timer and scoring |
+| Exam Scenarios | ✅ Shipped | 6 production scenarios with 30 linked questions matching official CCA-F format |
 | Concept Deep-Dives | 🚧 Planned | In-depth explanations for all 30 task statements |
-| Exam-Realistic Scenarios | 🚧 Planned | Extended scenario-based practice |
 
 ## Quick Start
 
@@ -47,6 +48,21 @@ architect-ai quiz
 
 > 💡 **That's it.** No API key, no account, no cost. Just `quiz` and start practicing.
 
+### More Commands
+
+```bash
+architect-ai exam                  # Timed 60-question mock exam
+architect-ai study --domain 1      # Adaptive study with spaced repetition
+architect-ai assess                # Exam readiness prediction
+architect-ai dashboard             # Progress tracking dashboard
+```
+
+### Web UI
+
+```bash
+cd web && npm install && npm run dev   # Opens at http://localhost:3939
+```
+
 ## Three Ways to Learn
 
 <table>
@@ -56,7 +72,7 @@ architect-ai quiz
 ### 🖥️ Tier 1 — Static CLI
 **No API Key Required**
 
-105 scenario-based questions across all 5 exam domains. Pre-generated explanations.
+105 scenario-based questions across all 5 exam domains. Timed exam simulation. Spaced repetition. Progress tracking.
 
 Works offline. Works on a plane.
 
