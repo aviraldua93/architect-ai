@@ -8,16 +8,16 @@
     "question": "What prompt engineering technique most effectively ensures consistent output quality?",
     "options": {
       "A": "Provide an explicit evaluation rubric defining what 'good code' means: error handling required, TypeScript types mandatory, input validation on all parameters, and structured error responses",
-      "B": "Add the word 'please' and 'carefully' to the prompt for emphasis",
+      "B": "Add detailed persona descriptions specifying the model's background and education level",
       "C": "Increase the temperature parameter to give Claude more creative freedom",
       "D": "Send the same prompt multiple times and pick the best response manually"
     },
     "correctAnswer": "A",
-    "explanation": "Explicit rubrics eliminate ambiguity by defining measurable criteria for output quality. When Claude knows exactly what dimensions matter (error handling, types, validation), it consistently includes them. Option B adds politeness but no actionable criteria. Option C increases randomness, worsening consistency. Option D is wasteful and does not address the root cause of inconsistency.",
-    "examTrap": "Option D seems practical but scales poorly and does not solve the underlying prompt ambiguity problem.",
+    "explanation": "Explicit rubrics eliminate ambiguity by defining measurable criteria for output quality. When Claude knows exactly what dimensions matter (error handling, types, validation), it consistently includes them. Option B adds persona flavor but personas do not ensure structural consistency — they shape tone and style, not whether specific code elements are included. Option C increases randomness, worsening consistency. Option D is wasteful and does not address the root cause of inconsistency.",
+    "examTrap": "Option B is plausible because personas can improve tone, but they do not guarantee that specific structural requirements (error handling, types, validation) are consistently met.",
     "conceptsTested": [
       "evaluation rubrics",
-      "explicit criteria for consistency"
+      "system prompt criteria for output format consistency"
     ]
   },
   {
@@ -67,20 +67,20 @@
     "domain": 4,
     "taskStatement": "4.1",
     "difficulty": "foundation",
-    "scenario": "A documentation team uses Claude to generate API reference pages. Some pages include code examples while others do not. Some use formal language while others are casual. The team wants every page to follow the same structure and tone.",
-    "question": "What is the most effective way to get consistent documentation format and tone?",
+    "scenario": "A documentation team has three human reviewers evaluating Claude-generated API reference pages. Each reviewer rates pages on a 1-5 scale for completeness, but their scores vary widely — one reviewer gives a page a 2 while another gives it a 5. The team wants reviewers to be calibrated.",
+    "question": "What is the most effective way to align human reviewers when evaluating Claude's output?",
     "options": {
-      "A": "Provide an explicit rubric specifying required sections (Description, Parameters, Returns, Example), tone (technical but approachable), and a complete example of a well-formatted page",
-      "B": "Tell Claude to 'write professional documentation' and rely on its training data",
-      "C": "Generate multiple versions and have a human editor pick the best one each time",
-      "D": "Use a lower temperature setting without any additional formatting guidance"
+      "A": "Create an evaluation rubric that defines each score level with concrete examples: '1 = missing critical sections, 2 = all sections present but no code examples, 3 = complete with basic examples, 4 = comprehensive with edge cases, 5 = production-ready with error handling examples'",
+      "B": "Tell reviewers to 'use their professional judgment' and average their scores",
+      "C": "Have each reviewer explain their reasoning in a paragraph and discuss disagreements in a meeting",
+      "D": "Assign each reviewer to a different page so scores are never compared"
     },
     "correctAnswer": "A",
-    "explanation": "An explicit rubric with required sections, tone guidance, and a concrete example gives Claude a clear template to follow consistently. Option B relies on vague instructions that Claude interprets differently each time. Option C is expensive and does not scale. Option D reduces randomness but without structure guidance, consistency in format is not guaranteed.",
-    "examTrap": "Option D addresses randomness but not structure — low temperature produces consistent-style text but will not guarantee specific sections or formatting without explicit instructions.",
+    "explanation": "An evaluation rubric with score-level definitions and concrete examples calibrates human reviewers by anchoring each score to specific, observable criteria. This reduces subjective interpretation and improves inter-rater reliability. Option B relies on unaligned intuitions. Option C is time-consuming and does not prevent future drift. Option D avoids the problem rather than solving it.",
+    "examTrap": "Option C sounds collaborative but without a shared rubric, reviewers will continue to use different internal standards even after discussion.",
     "conceptsTested": [
-      "evaluation rubrics",
-      "structural consistency in prompts"
+      "evaluation rubric criteria for human review consistency",
+      "inter-rater reliability"
     ]
   },
   {
@@ -418,6 +418,90 @@
     "conceptsTested": [
       "variance as disagreement metric",
       "automated flagging for human review"
+    ]
+  },
+  {
+    "id": "d4-q21",
+    "domain": 4,
+    "taskStatement": "4.1",
+    "difficulty": "advanced",
+    "scenario": "A customer service agent powered by Claude retrieves account balances from a database tool and presents them to customers. Claude returns a balance of $4,523.17 but the actual database value is $4,532.17 — the digits '32' were transposed to '23'. The system prompt says 'Be helpful and accurate.' The customer does not notice the error because the response was delivered confidently.",
+    "question": "What is the root cause of this failure and the most effective fix?",
+    "options": {
+      "A": "The 'false positive trust problem' — Claude can confidently return incorrect data, and the prompt provides no verification mechanism. Fix: add explicit verification instructions such as 'Always re-read the data source value before stating any number to the user'",
+      "B": "Claude's arithmetic capabilities are insufficient for financial calculations. Fix: use a calculator tool for all number operations",
+      "C": "The model's temperature is too high, causing random digit substitutions. Fix: set temperature to 0",
+      "D": "The database tool returned corrupted data. Fix: add retry logic to the database query"
+    },
+    "correctAnswer": "A",
+    "explanation": "The false positive trust problem occurs when Claude confidently presents incorrect information without any self-verification step. The prompt says 'be accurate' but provides no mechanism to enforce accuracy. Adding explicit verification instructions ('re-read the value before stating it') creates a concrete check. Option B misdiagnoses the problem — Claude is not doing arithmetic, it is misreading data. Option C is incorrect because temperature does not cause digit transposition in data retrieval. Option D assumes a tool error, but the issue is in Claude's presentation of the data.",
+    "examTrap": "Option C is tempting because temperature controls randomness, but digit transposition during data presentation is not a temperature-related problem — it is a verification gap in the prompt.",
+    "conceptsTested": [
+      "false positive trust problem",
+      "verification mechanisms in prompts"
+    ]
+  },
+  {
+    "id": "d4-q22",
+    "domain": 4,
+    "taskStatement": "4.3",
+    "difficulty": "intermediate",
+    "scenario": "A contact management system uses Claude with structured output to extract contact details from business emails. The JSON schema defines phone_number as a required string field. When processing emails that do not mention a phone number, Claude sometimes returns fabricated phone numbers like '555-0100' that look plausible but are entirely invented.",
+    "question": "How should the schema be changed to prevent phone number hallucination?",
+    "options": {
+      "A": "Make phone_number optional or nullable so Claude can return null when no phone number is present in the source data, rather than being forced to fabricate a value to satisfy the schema",
+      "B": "Add a regex validation pattern to the phone_number field to reject obviously fake numbers",
+      "C": "Add a system prompt instruction saying 'Do not make up phone numbers' while keeping the field required",
+      "D": "Remove the phone_number field entirely from the schema since it is unreliable"
+    },
+    "correctAnswer": "A",
+    "explanation": "When a required field has no corresponding data in the source, Claude is forced to choose between schema compliance (returning a value) and accuracy (admitting no value exists). Making the field optional/nullable resolves this tension by allowing Claude to truthfully indicate missing data. Option B catches some fakes but does not address the root cause — Claude will generate numbers that pass validation. Option C creates conflicting instructions (field required but do not invent). Option D loses legitimate phone data from emails that do contain numbers.",
+    "examTrap": "Option C seems like a quick fix but creates a contradiction — the schema requires a value while the prompt says not to invent one. Claude must violate one instruction or the other.",
+    "conceptsTested": [
+      "optional/nullable fields to prevent hallucination",
+      "structured output schema design"
+    ]
+  },
+  {
+    "id": "d4-q23",
+    "domain": 4,
+    "taskStatement": "4.5",
+    "difficulty": "foundation",
+    "scenario": "A development team wants to use the Anthropic Batch API to process thousands of customer support tickets. Their current single-request implementation uses tool calling with a multi-turn loop: Claude calls a lookup_order tool, receives the result, then calls a check_status tool, receives that result, and finally generates a response.",
+    "question": "Can the team use the Batch API for this multi-turn tool-calling workflow?",
+    "options": {
+      "A": "No — the Batch API processes single-turn requests only. If a response contains a tool_use block, the batch cannot automatically execute the tool and continue the conversation",
+      "B": "Yes — include the tool definitions in each batch request and the Batch API will automatically execute tools and manage the multi-turn loop",
+      "C": "Yes — use the custom_id field to chain multiple batch requests into a conversation sequence",
+      "D": "No — the Batch API does not support tool definitions at all"
+    },
+    "correctAnswer": "A",
+    "explanation": "The Batch API processes each request as an independent single-turn interaction. While you can include tool definitions (making Option D incorrect), if Claude's response includes a tool_use block, there is no mechanism to execute the tool and feed results back within the batch. Multi-turn tool loops require synchronous request handling. Option B incorrectly describes automatic tool execution. Option C misuses custom_id — it is for result correlation, not conversation chaining.",
+    "examTrap": "Option B is the key trap — tool definitions can be included in batch requests for single-turn tool use, but the batch cannot manage the execute-and-continue loop that multi-turn tool calling requires.",
+    "conceptsTested": [
+      "Batch API single-turn limitation",
+      "tool calling with Batch API"
+    ]
+  },
+  {
+    "id": "d4-q24",
+    "domain": 4,
+    "taskStatement": "4.5",
+    "difficulty": "intermediate",
+    "scenario": "A data processing pipeline submits 1,000 document analysis requests to the Anthropic Batch API. Each request analyzes a different legal document and extracts key clauses. When the batch completes, the team needs to match each result back to the original document that was analyzed.",
+    "question": "How does the team reliably match batch results to their corresponding input documents?",
+    "options": {
+      "A": "Use the custom_id field — assign each request a unique identifier (such as the document ID) that appears unchanged in the corresponding result object",
+      "B": "Results are returned in the same sequential order as the input requests, so use array index matching",
+      "C": "Parse the response content to extract the document name that Claude mentions in its analysis",
+      "D": "Submit requests one at a time with a delay between each to maintain ordering"
+    },
+    "correctAnswer": "A",
+    "explanation": "The custom_id field is specifically designed for result correlation in the Batch API. Each request includes a unique custom_id that is preserved in the corresponding result, enabling reliable matching regardless of processing order. Option B is incorrect because batch results are NOT guaranteed to be returned in input order. Option C is fragile and depends on Claude consistently mentioning document identifiers. Option D defeats the purpose of batch processing entirely.",
+    "examTrap": "Option B is the key trap — it is a natural assumption that results maintain input order, but the Batch API processes requests in parallel and results may arrive in any order.",
+    "conceptsTested": [
+      "custom_id for batch result correlation",
+      "Batch API result ordering"
     ]
   }
 ]

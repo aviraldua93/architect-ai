@@ -1,0 +1,33 @@
+# Source and development files
+src/
+test/
+web/
+docs/
+scripts/
+.github/
+.claude/
+.husky/
+
+# Config files
+vitest.config.ts
+tsconfig.json
+tsconfig.test.json
+.eslintrc.*
+.prettierrc
+.tsc-cache/
+.mcp.json
+conductor.json
+.env.example
+tsc-out.txt
+
+# Other
+*.test.ts
+*.test.js
+*.map
+CONTRIBUTING.md
+ARCHITECTURE.md
+SECURITY.md
+CHANGELOG.md
+QUICKSTART.md
+TODOS.md
+VERSION

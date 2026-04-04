@@ -1,0 +1,106 @@
+{
+  "id": "scenario-developer-productivity",
+  "title": "MCP Tools for Developer Productivity",
+  "description": "You are the platform architect at CodeVelocity, a developer tools startup building an internal developer platform (IDP) for mid-size engineering organizations. The platform's flagship feature is an AI-powered development assistant that uses Claude via the Messages API, integrated with a suite of custom MCP tools that provide real-time access to the engineering team's infrastructure: code search across monorepos, documentation lookup from Confluence and Notion, test runner integration, deployment status checks, and incident management.\n\nThe MCP server hosts 12 tools organized into four categories: (1) Code Intelligence — CodeSearch (full-text search across repositories), SymbolLookup (find definitions, references, and call hierarchies), and DependencyGraph (trace import chains and identify circular dependencies); (2) Documentation — DocSearch (semantic search across Confluence/Notion), APIReference (look up internal API specifications), and RunbookFinder (locate operational runbooks for services); (3) Testing — TestRunner (execute test suites), CoverageReport (generate coverage analysis), and TestGenerator (suggest tests for uncovered code paths); (4) Operations — DeployStatus (check deployment pipeline status), IncidentLookup (search incident history), and ServiceHealth (current health metrics for services).\n\nA critical design challenge is tool descriptions. Claude selects which tool to use based entirely on the tool's name and description. With 12 tools available, ambiguous or overlapping descriptions cause Claude to select the wrong tool — for example, searching incidents when the user wants documentation, or running tests when they want coverage analysis. Each tool description must be precise enough for Claude to distinguish between similar tools, specific enough to convey the tool's capabilities and limitations, and concise enough to fit within reasonable prompt space.\n\nInput validation is another key concern. Each tool accepts structured input defined by JSON Schema (validated with Zod at runtime). The CodeSearch tool accepts a query string, optional language filter, optional file path glob, and a maximum results count (1–100, default 20). If a user asks Claude to 'search for all authentication code,' Claude must construct a valid tool input — but it sometimes hallucinates parameters that don't exist in the schema (e.g., adding a 'repository' field that the tool doesn't support) or provides values outside valid ranges (e.g., max_results: 500). Robust Zod validation must catch these errors and return helpful error messages that guide Claude toward correct usage.\n\nError handling must distinguish between retryable and permanent errors. CodeSearch might timeout on a very broad query (retryable with a narrower query), but a SymbolLookup for a non-existent symbol is a permanent failure. Tool errors must be returned to Claude as structured is_error responses with enough context for Claude to either retry with adjusted parameters or inform the user.\n\nThe tool_choice parameter is crucial for certain workflows. When a user says 'run my tests,' the system should force Claude to use TestRunner (tool_choice: {type: 'tool', name: 'TestRunner'}) rather than letting Claude decide — which might lead it to first search for test files or check documentation. However, for open-ended questions like 'how do I fix this flaky test?', tool_choice should be 'auto' so Claude can use any combination of tools: searching code, looking up documentation, checking incident history for related failures, and running the test to reproduce the issue.\n\nThe MCP server must also handle tool_choice: 'none' for scenarios where the user wants Claude's analysis without tool invocation — for example, 'explain what this error message means' shouldn't trigger any tool calls even though Claude might want to search for the error in incident history.\n\nPerformance requirements: tool invocations must complete within 5 seconds (p99), the MCP server must handle 50 concurrent tool requests, and tool descriptions must be stable enough that Claude's tool selection accuracy exceeds 95% across a benchmark of 200 representative queries.",
+  "domains": [2, 4, 1],
+  "questions": [
+    {
+      "id": "dp-q01",
+      "domain": 2,
+      "taskStatement": "2.1",
+      "difficulty": "foundation",
+      "scenario": "CodeVelocity's MCP server has 12 tools. During testing, Claude frequently confuses CodeSearch (full-text search across repositories) with DocSearch (semantic search across Confluence/Notion). The current tool descriptions are: CodeSearch — 'Search for code' and DocSearch — 'Search for documentation'. The team observes that when users ask 'find examples of rate limiting,' Claude uses DocSearch 60% of the time even though the user clearly wants code examples.",
+      "question": "What is the most effective approach to fix Claude's tool selection confusion between CodeSearch and DocSearch?",
+      "options": {
+        "A": "Rename the tools to have more distinct names like FindCodeInRepo and FindDocsInWiki",
+        "B": "Rewrite the tool descriptions to be precise and differentiating — CodeSearch: 'Full-text search across source code repositories. Use for finding code implementations, function definitions, usage examples, and patterns in .py/.ts/.java files. Returns file paths, line numbers, and matching code snippets.' DocSearch: 'Semantic search across Confluence and Notion knowledge bases. Use for finding architectural decisions, API guides, onboarding docs, and process documentation. Returns document titles, snippets, and links.'",
+        "C": "Remove DocSearch and let CodeSearch handle all search queries",
+        "D": "Add a system prompt instruction telling Claude when to use each tool"
+      },
+      "correctAnswer": "B",
+      "explanation": "Tool descriptions are Claude's primary mechanism for tool selection. Effective descriptions must include: (1) what the tool does (full-text search vs semantic search), (2) what data sources it accesses (source code repos vs Confluence/Notion), (3) when to use it (finding code implementations vs finding documentation), (4) what it returns (file paths and code snippets vs document titles and links). The original descriptions ('Search for code' / 'Search for documentation') are too vague — 'rate limiting examples' could be either code or documentation. The improved descriptions make the distinction clear: if the user wants implementation examples, CodeSearch's description explicitly mentions 'code implementations' and 'usage examples.' Option A helps marginally but names alone don't convey enough context. Option C removes useful functionality. Option D is fragile — system prompt instructions are less reliable than description-level guidance.",
+      "examTrap": "Option D (system prompt) seems like a valid supplement, but the exam emphasizes that tool descriptions are the PRIMARY selection mechanism. System prompt instructions can supplement but should not replace well-written descriptions.",
+      "conceptsTested": ["tool descriptions", "tool selection", "description precision", "disambiguation"]
+    },
+    {
+      "id": "dp-q02",
+      "domain": 2,
+      "taskStatement": "2.2",
+      "difficulty": "intermediate",
+      "scenario": "The CodeSearch tool accepts a max_results parameter with a valid range of 1–100. During production use, Claude occasionally sends max_results: 500 or includes hallucinated parameters like 'repository: main' that don't exist in the schema. The current Zod validation throws an unstructured error that Claude cannot interpret, leading it to retry with the exact same invalid parameters.",
+      "question": "How should input validation errors be returned to Claude to enable self-correction?",
+      "options": {
+        "A": "Return the raw Zod error object as the tool result",
+        "B": "Return a structured is_error response with: the specific validation failure (e.g., 'max_results must be between 1 and 100, received 500'), the valid parameter schema showing accepted fields and ranges, and a corrective hint (e.g., 'Remove the repository field — it is not a valid parameter. Use path_glob to filter by repository path instead.')",
+        "C": "Silently clamp invalid values to the nearest valid value (e.g., 500 → 100) and ignore unknown parameters",
+        "D": "Return a generic 'Invalid input' error message"
+      },
+      "correctAnswer": "B",
+      "explanation": "Structured error responses enable Claude's self-correction loop. An effective validation error response includes: (1) the specific failure — which parameter failed and why, with the actual vs expected values; (2) the valid schema — showing Claude what parameters are accepted and their constraints; (3) corrective hints — actionable guidance on how to fix the issue, including alternatives for hallucinated parameters. This allows Claude to construct a correct retry on the next attempt. Option A returns technical error objects that Claude struggles to interpret. Option C silently changes the user's intent (they asked for 500 results for a reason — maybe the query should be narrowed instead). Option D gives Claude no information to work with, leading to repeated failures.",
+      "examTrap": "Option C (silent clamping) seems user-friendly but violates the principle of explicit communication. Claude needs to know its input was modified to provide accurate information to the user ('I found 100 results but you requested 500 — would you like me to narrow the search?').",
+      "conceptsTested": ["structured error responses", "self-correction", "Zod validation", "corrective hints", "is_error protocol"]
+    },
+    {
+      "id": "dp-q03",
+      "domain": 2,
+      "taskStatement": "2.3",
+      "difficulty": "intermediate",
+      "scenario": "CodeVelocity needs to handle three distinct interaction patterns: (1) When a user says 'run my tests,' Claude must immediately invoke TestRunner without deliberation. (2) When a user asks 'how do I fix this flaky test?', Claude should freely choose from CodeSearch, DocSearch, IncidentLookup, and TestRunner. (3) When a user asks 'explain what this error message means,' Claude should provide analysis without invoking any tools.",
+      "question": "Which tool_choice configurations correctly implement these three interaction patterns?",
+      "options": {
+        "A": "Use tool_choice: 'auto' for all three patterns and rely on Claude's judgment",
+        "B": "Pattern 1: tool_choice: {type: 'tool', name: 'TestRunner'} to force immediate TestRunner invocation. Pattern 2: tool_choice: 'auto' to let Claude select from all available tools. Pattern 3: tool_choice: 'none' to prevent any tool invocation.",
+        "C": "Pattern 1: tool_choice: 'required'. Pattern 2: tool_choice: 'auto'. Pattern 3: remove all tools from the request.",
+        "D": "Use system prompt instructions to control tool usage for each pattern"
+      },
+      "correctAnswer": "B",
+      "explanation": "The tool_choice parameter provides deterministic control over Claude's tool usage: (1) {type: 'tool', name: 'TestRunner'} forces Claude to call the specific named tool — perfect for unambiguous commands like 'run my tests' where deliberation wastes time and risks wrong tool selection; (2) 'auto' lets Claude decide which tools to use (including using none) — ideal for open-ended questions that may require multiple tools; (3) 'none' explicitly prevents tool invocation — essential when the user wants Claude's reasoning without triggering side effects. Option A fails for Pattern 1 (Claude might search for test files first) and Pattern 3 (Claude might call IncidentLookup for the error). Option C's 'required' forces a tool call but doesn't specify WHICH tool. Option D is unreliable for controlling tool behavior.",
+      "examTrap": "Option C's use of 'required' for Pattern 1 is the trap — 'required' forces Claude to call SOME tool but doesn't specify which one. Claude might call CodeSearch to find the test file instead of TestRunner to run it. Use the specific tool name to force a particular tool.",
+      "conceptsTested": ["tool_choice modes", "auto vs required vs none", "forced tool selection", "interaction patterns"]
+    },
+    {
+      "id": "dp-q04",
+      "domain": 2,
+      "taskStatement": "2.4",
+      "difficulty": "advanced",
+      "scenario": "CodeVelocity's MCP server currently exposes all 12 tools as MCP tools. The team realizes that some data sources would be better exposed as MCP resources (read-only data that Claude can reference) rather than tools (actions that Claude invokes). The ServiceHealth data, for instance, rarely changes during a conversation and doesn't require dynamic invocation — it would be more token-efficient as a resource that's included in context. The APIReference data is also largely static during a session.",
+      "question": "How should the architect decide which MCP primitives (tools, resources, prompts) to use for each capability?",
+      "options": {
+        "A": "Expose everything as tools since tools are the most flexible primitive",
+        "B": "Use tools for dynamic, parameterized actions (CodeSearch, TestRunner, DeployStatus) that require specific inputs and produce variable outputs. Use resources for relatively static, read-only data (ServiceHealth, APIReference) that provides context without requiring invocation. Use prompts for reusable, parameterized prompt templates (incident investigation workflow, code review checklist) that structure multi-step interactions.",
+        "C": "Use resources for everything to minimize API calls",
+        "D": "Let Claude decide at runtime which primitive type to use"
+      },
+      "correctAnswer": "B",
+      "explanation": "MCP defines three primitives with distinct use cases: (1) Tools are for dynamic, parameterized operations that produce variable results based on inputs — CodeSearch returns different results for different queries, TestRunner executes different test suites. Tools are invoked by Claude when needed. (2) Resources are for relatively static data that provides contextual background — ServiceHealth shows current metrics that don't change per-query, APIReference documents are stable within a session. Resources are more token-efficient because they can be included in context once rather than requiring repeated tool invocations. (3) Prompts are for reusable workflow templates — an incident investigation prompt structures the step-by-step process Claude should follow. Option A wastes tokens by making Claude invoke tools for static data it could access as context. Option C loses the ability to perform dynamic actions. Option D is not how MCP works — primitive types are defined at server configuration time.",
+      "examTrap": "Option A ('tools are most flexible') is the most common mistake. While tools CAN expose static data, this forces Claude to invoke them every time it needs the information — consuming tokens and adding latency. Resources provide the same data more efficiently as pre-loaded context.",
+      "conceptsTested": ["MCP primitives", "tools vs resources vs prompts", "resource efficiency", "primitive selection criteria"]
+    },
+    {
+      "id": "dp-q05",
+      "domain": 4,
+      "taskStatement": "4.3",
+      "difficulty": "advanced",
+      "scenario": "The TestGenerator tool needs to accept complex structured input: a file path (string), a list of function names to generate tests for (array of strings), test framework preference (enum: 'pytest' | 'jest' | 'vitest'), coverage targets (object with line, branch, and function percentage thresholds), and optional configuration overrides (nullable object with timeout and parallel execution settings). Claude sometimes sends malformed inputs — nested objects where flat values are expected, wrong enum values, or missing required fields.",
+      "question": "What is the best approach to defining and validating the TestGenerator's input schema?",
+      "options": {
+        "A": "Define the schema as a plain JSON Schema object and validate inputs manually with if/else checks",
+        "B": "Use Zod to define a composable schema with precise types: z.object for the top level, z.string for file_path, z.array(z.string()) for function_names, z.enum for framework, z.object with z.number().min(0).max(100) for coverage targets, and z.object().nullable() for optional overrides — with .describe() on each field to provide Claude with usage hints in the schema itself",
+        "C": "Accept any JSON object and use try/catch to handle errors as they occur during execution",
+        "D": "Simplify the schema to accept only a string prompt describing what tests to generate"
+      },
+      "correctAnswer": "B",
+      "explanation": "Zod provides composable, type-safe schema definitions that serve double duty: runtime validation AND Claude guidance. Key Zod features for this use case: (1) z.enum(['pytest', 'jest', 'vitest']) ensures Claude selects from valid options; (2) z.number().min(0).max(100) catches out-of-range coverage targets; (3) z.object().nullable() correctly handles optional configuration; (4) .describe() annotations provide inline documentation that appears in the tool schema, helping Claude construct valid inputs on the first attempt. When validation fails, Zod produces structured error messages (which field, what was expected, what was received) that enable Claude's self-correction loop. Option A requires manual validation code that's error-prone and doesn't generate helpful error messages. Option C delays errors to execution time, wasting resources. Option D loses the structured interface that enables precise test generation.",
+      "examTrap": "Option A (manual JSON Schema validation) seems equivalent but misses Zod's key advantage: composable schemas that generate both TypeScript types AND runtime validators from a single definition. Manual validation also produces less structured error messages.",
+      "conceptsTested": ["Zod schema validation", "composable schemas", "describe annotations", "nullable types", "enum validation"]
+    }
+  ],
+  "walkthrough": "Step 1: Design Tool Descriptions — Write precise, differentiating descriptions for all 12 tools. Each description must include: what the tool does, what data sources it accesses, when to use it (and when NOT to use it), and what it returns. Test descriptions against a benchmark of 200 representative queries to verify >95% selection accuracy. Reference: src/tools/definitions.ts shows tool definition patterns.\n\nStep 2: Implement Zod Input Validation — Define Zod schemas for each tool's input parameters. Use precise types (z.enum, z.number().min().max()), add .describe() annotations for Claude guidance, and configure error formatting to produce structured, actionable error messages. Test with known-bad inputs to verify error messages guide self-correction. Reference: src/tools/definitions.ts includes Zod schema examples.\n\nStep 3: Build Structured Error Handling — Classify tool errors as retryable (timeout, rate limit) vs permanent (not found, permission denied). Return structured is_error responses with error_type, is_retryable, and corrective_hint fields. Implement retry logic for retryable errors with exponential backoff and maximum retry counts. Reference: src/tools/error-handling.ts provides the ToolError class.\n\nStep 4: Configure tool_choice Patterns — Implement routing logic that sets tool_choice based on user intent: forced tool selection for unambiguous commands, 'auto' for open-ended questions, 'none' for analysis-only requests. Build intent classification (keyword matching or Claude-based classification) to determine the appropriate tool_choice mode. Reference: src/tools/tool-choice-demo.ts demonstrates tool_choice patterns.\n\nStep 5: Optimize MCP Primitive Selection — Reclassify capabilities across MCP primitives: move static data (ServiceHealth, APIReference) to resources for token efficiency, keep dynamic actions (CodeSearch, TestRunner) as tools, and create prompt templates for structured workflows. Test that resource-based data provides equivalent quality to tool-based access with lower token usage.\n\nStep 6: Integration Testing — Test the complete MCP server with realistic developer workflows: 'find and fix a bug' (requires CodeSearch + TestRunner + DocSearch), 'investigate a production incident' (requires IncidentLookup + ServiceHealth + RunbookFinder), and 'set up a new service' (requires APIReference + DocSearch + CodeSearch). Verify tool selection accuracy, error handling, and response times meet the 5-second p99 target. Reference: src/mcp/server.ts implements the MCP server.",
+  "relatedFiles": [
+    "src/tools/definitions.ts",
+    "src/tools/error-handling.ts",
+    "src/tools/tool-choice-demo.ts",
+    "src/mcp/server.ts",
+    "src/agents/types.ts"
+  ]
+}

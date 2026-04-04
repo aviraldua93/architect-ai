@@ -31,6 +31,20 @@ import type {
 } from "./types";
 
 // ---------------------------------------------------------------------------
+// SDK NOTE: The Claude Agent SDK provides two built-in orchestration patterns
+// that replace custom spawner logic:
+//   - `ParallelAgent(agents=[...])` — runs multiple agents concurrently and
+//     collects all results. Equivalent to our spawnParallel() function.
+//     Uses Promise.allSettled semantics internally.
+//   - `SequentialAgent(agents=[...])` — runs agents one after another, where
+//     each agent's output can feed into the next agent's input. We don't have
+//     a direct equivalent here (our coordinator handles sequencing via
+//     priority groups), but SequentialAgent is cleaner for pipelines.
+// Key difference: SDK agents declare their dependencies declaratively,
+// while our spawner requires the coordinator to manage ordering manually.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Single subagent spawning
 // ---------------------------------------------------------------------------
 

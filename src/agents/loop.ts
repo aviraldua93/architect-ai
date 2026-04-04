@@ -51,6 +51,15 @@ import type {
 } from "./types";
 
 // ---------------------------------------------------------------------------
+// SDK NOTE: In the Claude Agent SDK, this entire while-loop is encapsulated
+// by `Agent.run()`. The SDK manages the loop internally — you provide tools,
+// hooks, and a system prompt, and `run()` handles the stop_reason checking,
+// tool dispatch, and conversation history management. The key difference is
+// that our loop is explicit (educational), while the SDK's is implicit.
+// The stop_reason semantics (end_turn, tool_use, max_tokens) are identical.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Agentic loop implementation
 // ---------------------------------------------------------------------------
 

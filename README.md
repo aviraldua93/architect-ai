@@ -1,11 +1,11 @@
-# 🏗️ ArchitectAI
+# ArchitectAI — Free Study Tool for the Claude Certified Architect Exam
 
-**AI-powered study tool for the Claude Certified Architect (Foundations) exam.**
 **The codebase IS the curriculum — every file demonstrates an exam concept in production code.**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](tsconfig.json)
-[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](src/mcp/)
-[![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)]()
+[![GitHub stars](https://img.shields.io/github/stars/aviraldua93/architect-ai?style=flat-square)](https://github.com/aviraldua93/architect-ai/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/aviraldua93/architect-ai/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/aviraldua93/architect-ai/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](tsconfig.json)
 
 ---
 
@@ -14,6 +14,38 @@
 ArchitectAI is an open-source study tool for the [Claude Certified Architect (Foundations)](https://www.anthropic.com/certification) exam — but with a twist: **the codebase itself teaches you the exam concepts**. Every architectural decision, every file, every pattern maps directly to one of the 30 exam task statements across 5 domains.
 
 You don't just *read* about agentic loops — you see a production implementation in `src/agents/loop.ts`. You don't just *memorise* hook patterns — you see `PostToolUse` normalisation running live in `src/agents/hooks.ts`.
+
+> 🆓 **No API key required for Tier 1.** 105 practice questions, full CLI quiz — completely free and offline.
+
+## Feature Status
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| CLI Quiz (`quiz`) | ✅ Shipped | 105 questions across all 5 domains |
+| MCP Server | ✅ Shipped | Full JSON-RPC 2.0 server with resources, tools, and prompts |
+| Web UI | 🚧 In Progress | Next.js app with quiz, study, exam, and dashboard pages |
+| CLI Study Mode (`study`) | 🚧 Coming Soon | Interactive guided study sessions |
+| CLI Assessment (`assess`) | 🚧 Coming Soon | Readiness scoring and gap analysis |
+| Timed Exam Simulation | 🚧 Coming Soon | Full mock exam with timer and scoring |
+| Concept Deep-Dives | 🚧 Planned | In-depth explanations for all 30 task statements |
+| Exam-Realistic Scenarios | 🚧 Planned | Extended scenario-based practice |
+
+## Quick Start
+
+```bash
+git clone https://github.com/aviraldua93/architect-ai.git && cd architect-ai
+npm install
+npx architect-ai quiz
+```
+
+Or install globally:
+
+```bash
+npm install -g architect-ai
+architect-ai quiz
+```
+
+> 💡 **That's it.** No API key, no account, no cost. Just `quiz` and start practicing.
 
 ## Three Ways to Learn
 
@@ -24,7 +56,7 @@ You don't just *read* about agentic loops — you see a production implementatio
 ### 🖥️ Tier 1 — Static CLI
 **No API Key Required**
 
-Pre-generated question banks, explanations, and mock exams.
+105 scenario-based questions across all 5 exam domains. Pre-generated explanations.
 
 Works offline. Works on a plane.
 
@@ -70,30 +102,21 @@ Every file maps to a specific exam domain and task statement:
 | **4. Prompt Engineering** | 20% | `src/prompts/` | Explicit criteria, few-shot examples, structured output, validation-retry, batch API, multi-instance review |
 | **5. Context & Reliability** | 15% | `src/context/` | Context preservation, escalation patterns, error propagation, codebase exploration, human review, provenance |
 
-## Quick Start
-
-> ⚠️ **In active development.** Tier 1 commands coming first. Star/watch to get notified.
+## Usage
 
 ```bash
-# Clone
-git clone https://github.com/aviraldua93/architect-ai.git
-cd architect-ai
-
-# Install
-bun install        # or: npm install
-
 # Tier 1: Offline study (no API key needed)
-bun run study      # Interactive CLI quiz
-bun run quiz       # Quick practice questions
-bun run assess     # Check your exam readiness
+npx architect-ai quiz              # Quick practice questions
+npx architect-ai quiz -d 1         # Filter by domain (1-5)
+npx architect-ai quiz -t 1.2       # Filter by task statement
 
 # Tier 2: MCP server (plug into Claude Desktop / Copilot)
-bun run mcp        # Start MCP server
+npm run mcp                        # Start MCP server
 
-# Tier 3: Live agents (requires ANTHROPIC_API_KEY)
-export ANTHROPIC_API_KEY=your-key    # macOS/Linux
-# $env:ANTHROPIC_API_KEY="your-key"  # Windows PowerShell
-bun run agent      # Adaptive study session
+# Tier 3: Live agents (requires ANTHROPIC_API_KEY — coming soon)
+export ANTHROPIC_API_KEY=your-key   # macOS/Linux
+# $env:ANTHROPIC_API_KEY="your-key" # Windows PowerShell
+npm run agent                       # Adaptive study session
 ```
 
 ## Project Structure
@@ -127,15 +150,25 @@ architect-ai/
 │   │   └── escalation.ts            Tier 1→2→3 escalation patterns (5.2)
 │   ├── cli/                     ← Domain 3: CLI & Commands (20%)
 │   └── content/                 ← Pre-generated study material
-│       ├── questions/              150 scenario-based questions
-│       ├── explanations/           50 concept deep-dives
-│       └── scenarios/              20 exam-realistic scenarios
+│       └── questions/              105 scenario-based questions
+├── web/                         ← Next.js web UI (in progress)
 ├── test/
 │   ├── tier1/                   ← Free static validation (<5s)
 │   ├── tier2/                   ← E2E with real Claude (~$3-4/run)
 │   └── tier3/                   ← LLM-as-judge quality checks (~$0.15/run)
 └── docs/                        ← Architecture & contributor guides
 ```
+
+## Question Banks
+
+| Domain | Questions | Status |
+|--------|-----------|--------|
+| 1 — Agentic Architecture | 30 | ✅ Complete |
+| 2 — Tool Design & MCP | 20 | ✅ Complete |
+| 3 — Claude Code Config | 20 | ✅ Complete |
+| 4 — Prompt Engineering | 20 | ✅ Complete |
+| 5 — Context & Reliability | 15 | ✅ Complete |
+| **Total** | **105** | |
 
 ## The Meta-Pattern
 
@@ -151,20 +184,9 @@ This project practices what it preaches. The way it's built IS a demonstration o
 
 Contributions welcome! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide — branch naming, PR process, testing, code style, and how to add questions.
 
-## Question Banks
-
-| Domain | Status | File |
-|--------|--------|------|
-| 1 — Agentic Architecture | ✅ Complete | `src/content/questions/domain-1-agentic-architecture.json` |
-| 2 — Tool Design & MCP | 🚧 Coming soon | — |
-| 3 — Claude Code Config | ✅ Complete | _(covered in `.claude/` config files)_ |
-| 4 — Prompt Engineering | ✅ Complete | _(embedded in `src/prompts/few-shot.ts` examples)_ |
-| 5 — Context & Reliability | ✅ Complete | _(covered by `src/context/` implementations)_ |
-- See the repo's `.claude/` directory for project conventions
-
 ## About
 
-**ArchitectAI** is an [aviraldua93](https://github.com/aviraldua93) project — built using the very agentic patterns it teaches.
+**ArchitectAI** is an [aviraldua93](https://github.com/aviraldua93) project — built by [Aviral Dua](https://github.com/aviraldua93) using the very agentic patterns it teaches.
 
 ---
 

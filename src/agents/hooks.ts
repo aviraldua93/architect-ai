@@ -32,6 +32,22 @@ import type {
 } from "./types";
 
 // ---------------------------------------------------------------------------
+// SDK NOTE: The Claude Agent SDK provides built-in hook lifecycle methods:
+//   - `pre_tool_use(tool_name, tool_input)` — runs before each tool call.
+//     Equivalent to our PreToolUseHook.validate(). Return a rejection to
+//     block the call. The SDK passes the full RunContext to the hook.
+//   - `post_tool_use(tool_name, tool_input, tool_result)` — runs after each
+//     tool call. Equivalent to our PostToolUseHook.execute(). Can transform
+//     the result before it's appended to the conversation.
+// Differences from our custom implementation:
+//   1. SDK hooks receive a `RunContext` object (includes agent state, model
+//      config, and conversation history) — richer than our HookContext.
+//   2. SDK hooks are registered on the Agent class, not passed as a pipeline.
+//   3. SDK supports additional lifecycle hooks: `pre_model_call`,
+//      `post_model_call`, and `on_error` — which we don't implement here.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // PostToolUse hooks: data normalisation
 // ---------------------------------------------------------------------------
 

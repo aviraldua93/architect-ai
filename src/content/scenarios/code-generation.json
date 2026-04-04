@@ -1,0 +1,106 @@
+{
+  "id": "scenario-code-generation",
+  "title": "Claude Code Python Project Configuration",
+  "description": "You are the lead architect at DataForge, a data engineering consultancy that builds ETL pipelines for enterprise clients. The team has adopted Claude Code as its primary AI coding assistant and needs to configure it for a large Python monorepo called 'forge-pipeline' — a 120,000-line codebase spanning data ingestion, transformation, validation, and output modules. The repository structure follows a strict convention: src/forge/ contains production code organized by pipeline stage, tests/ mirrors the src/ structure, configs/ holds YAML pipeline definitions, and security/ contains encryption keys, credential templates, and compliance scripts that must never be modified by AI.\n\nThe team consists of 8 engineers with varying experience levels. Junior engineers frequently ask Claude Code to generate test cases, while senior engineers use it for complex refactoring tasks. The project has strict code quality requirements: all code must pass mypy strict mode, pytest with 90% coverage thresholds, and a custom linter that enforces DataForge's naming conventions. The CI pipeline runs on every push and rejects any commit that doesn't meet these standards.\n\nYour first task is to establish the CLAUDE.md hierarchy. The root CLAUDE.md must set project-wide conventions: Python 3.12, pytest for testing, Black for formatting (line length 100), isort for imports (profile: black), and mypy in strict mode. It must also document the project's architectural patterns — the Pipeline-Stage-Transform pattern where each pipeline stage is a class inheriting from BaseStage with a process() method that takes a DataFrame and returns a DataFrame.\n\nSubdirectory CLAUDE.md files are needed for specialized contexts. The tests/ directory needs a CLAUDE.md that instructs Claude Code to always use pytest fixtures from conftest.py, generate parametrized tests using @pytest.mark.parametrize, and include edge cases for null/empty DataFrame inputs. The configs/ directory needs a CLAUDE.md explaining the YAML schema for pipeline definitions. The security/ directory needs a CLAUDE.md that explicitly states Claude Code must NEVER modify files in this directory.\n\nYou also need to create custom skills (SKILL.md files) for common tasks. The team's most frequent request is 'generate tests for this module,' which requires understanding DataForge's testing patterns: fixtures for database connections, mocks for external API calls, and parametrized tests for data type variations. A second skill handles 'add a new pipeline stage,' which involves creating the stage class, its tests, its YAML config entry, and updating the stage registry.\n\nPath rules must be configured to protect sensitive directories. The security/ directory should be completely blocked — Claude Code must not read or write any files in it. The configs/production/ directory should be read-only — Claude Code can reference production configs for context but must never modify them. The .env and .env.* files must be excluded entirely.\n\nThe team has reported issues with Claude Code's iterative refinement workflow. When generating complex pipeline stages, the first attempt often fails mypy strict mode. The team wants Claude Code to automatically run mypy after code generation and fix type errors iteratively rather than producing a single-shot output that requires manual fixes. Similarly, generated tests should be run immediately, and failures should trigger automatic refinement.\n\nFinally, the team wants to use plan mode for large refactoring tasks. Before executing a refactoring (e.g., migrating from pandas to polars), Claude Code should first produce a plan showing which files will be modified, what changes will be made, and what the risk assessment is. The plan should be reviewable before execution begins.",
+  "domains": [3, 4, 5],
+  "questions": [
+    {
+      "id": "cg-q01",
+      "domain": 3,
+      "taskStatement": "3.1",
+      "difficulty": "foundation",
+      "scenario": "You are setting up the CLAUDE.md hierarchy for the forge-pipeline repository. The root CLAUDE.md establishes Python 3.12, pytest, and Black formatting. You need a tests/ subdirectory CLAUDE.md that provides testing-specific guidance. A junior developer asks whether instructions in the tests/CLAUDE.md will override or supplement the root CLAUDE.md.",
+      "question": "How does Claude Code resolve instructions when both a root CLAUDE.md and a subdirectory CLAUDE.md exist?",
+      "options": {
+        "A": "The subdirectory CLAUDE.md completely replaces the root CLAUDE.md for files in that directory",
+        "B": "Claude Code merges both files — the root CLAUDE.md provides base context and the subdirectory CLAUDE.md adds or refines instructions specific to that directory, with subdirectory instructions taking precedence on conflicts",
+        "C": "Only the root CLAUDE.md is used; subdirectory CLAUDE.md files are ignored",
+        "D": "Claude Code randomly selects one of the two files to use as context"
+      },
+      "correctAnswer": "B",
+      "explanation": "Claude Code implements a hierarchical CLAUDE.md system where files at different directory levels are merged. The root CLAUDE.md establishes project-wide conventions (Python version, formatting rules, architectural patterns), and subdirectory CLAUDE.md files add context specific to their location. When there's a conflict, the more specific (subdirectory) file takes precedence — similar to how CSS specificity works. This allows the tests/CLAUDE.md to add pytest-specific guidance without repeating the root's Python version and formatting rules. Option A would require duplicating all root instructions in every subdirectory. Option C would make subdirectory customization impossible.",
+      "examTrap": "Option A is tempting for developers familiar with configuration systems that use override-only semantics (like some .gitignore behaviors). But CLAUDE.md uses additive merging, not replacement.",
+      "conceptsTested": ["CLAUDE.md hierarchy", "configuration merging", "directory-level context"]
+    },
+    {
+      "id": "cg-q02",
+      "domain": 3,
+      "taskStatement": "3.2",
+      "difficulty": "intermediate",
+      "scenario": "DataForge wants a custom skill that generates comprehensive test suites for pipeline stages. The skill must understand DataForge's testing patterns: pytest fixtures from conftest.py, @pytest.mark.parametrize for data variations, mocks for external APIs, and edge cases for null/empty DataFrames. The team has tried using a detailed system prompt for this, but results are inconsistent — sometimes Claude Code uses unittest instead of pytest, or forgets to include null DataFrame edge cases.",
+      "question": "What is the most effective way to implement this reusable test generation capability in Claude Code?",
+      "options": {
+        "A": "Add all testing instructions to the root CLAUDE.md so they apply everywhere",
+        "B": "Create a SKILL.md file that defines the test generation skill with a structured template — including the skill's trigger description, required inputs, step-by-step procedure, output format, and concrete examples of correct test files — that Claude Code can invoke as a repeatable workflow",
+        "C": "Write a shell script that generates test boilerplate and have Claude Code call it",
+        "D": "Train a fine-tuned model on DataForge's existing test files"
+      },
+      "correctAnswer": "B",
+      "explanation": "SKILL.md files are Claude Code's mechanism for defining reusable, structured workflows. A well-crafted SKILL.md for test generation would include: (1) a description of when this skill applies ('generate tests for a pipeline stage module'), (2) required inputs (module path, stage class name), (3) step-by-step procedure (read the module, identify the stage class, create test file with fixtures, add parametrized tests, add edge cases), (4) output format expectations (file naming, import structure), and (5) concrete examples showing a correct test file. This provides consistent results because Claude Code follows the structured procedure rather than ad-hoc generation. Option A pollutes the global context with testing-specific details. Option C doesn't leverage Claude Code's understanding of the codebase. Option D is impractical and unnecessary.",
+      "examTrap": "Option A seems simpler, but CLAUDE.md is for conventions and context, not procedural workflows. Putting step-by-step task procedures in CLAUDE.md clutters the global context and doesn't provide the invocation mechanism that SKILL.md offers.",
+      "conceptsTested": ["SKILL.md", "custom skills", "reusable workflows", "structured task definitions"]
+    },
+    {
+      "id": "cg-q03",
+      "domain": 3,
+      "taskStatement": "3.3",
+      "difficulty": "intermediate",
+      "scenario": "The forge-pipeline repository has a security/ directory containing encryption keys and compliance scripts. The configs/production/ directory has production YAML configs that should be readable for context but never modified. The .env files contain API credentials. You need to configure Claude Code's path rules to enforce these access restrictions.",
+      "question": "Which path rule configuration correctly implements the required access restrictions?",
+      "options": {
+        "A": "Add instructions in CLAUDE.md: 'Do not modify files in security/ or configs/production/'",
+        "B": "Configure path rules with: security/** → blocked (no read or write), configs/production/** → read-only, .env* → blocked; and verify with Claude Code that the rules are enforced at the tool level, not just as prompt suggestions",
+        "C": "Use .gitignore to exclude security/ and configs/production/ from version control",
+        "D": "Set file system permissions to read-only on the security/ and configs/production/ directories"
+      },
+      "correctAnswer": "B",
+      "explanation": "Claude Code's path rules provide tool-level enforcement of file access restrictions. Setting security/** to 'blocked' prevents Claude Code from reading or writing any files in that directory — it cannot even see the contents for context. Setting configs/production/** to 'read-only' allows Claude Code to reference production configs for understanding the pipeline structure but prevents modifications. Blocking .env* files prevents credential exposure. Critically, path rules are enforced at the tool level — Claude Code's file editing and reading tools respect these rules regardless of what the prompt says. Option A relies on prompt compliance, which is not guaranteed. Option C affects git, not Claude Code's file access. Option D affects all users, not just Claude Code.",
+      "examTrap": "Option A is the most dangerous wrong answer — CLAUDE.md instructions are suggestions that Claude Code generally follows, but they are not enforced. Path rules provide deterministic access control. On the exam, always prefer tool-level enforcement over prompt-level instructions for security-critical restrictions.",
+      "conceptsTested": ["path rules", "glob patterns", "access control", "blocked vs read-only", "security enforcement"]
+    },
+    {
+      "id": "cg-q04",
+      "domain": 3,
+      "taskStatement": "3.5",
+      "difficulty": "advanced",
+      "scenario": "When Claude Code generates a new pipeline stage, the first attempt often fails mypy strict mode due to missing type annotations on DataFrame columns, incorrect Optional vs Union usage, or missing return type annotations on helper methods. The team currently has to manually request fixes ('run mypy and fix the errors'), sometimes going through 3–4 rounds of corrections. They want Claude Code to automatically iterate on type errors after initial code generation.",
+      "question": "What is the optimal approach to implement automatic iterative refinement for type-safe code generation?",
+      "options": {
+        "A": "Add 'always run mypy after generating code' to the system prompt",
+        "B": "Configure Claude Code's iterative refinement workflow to automatically run mypy --strict after code generation, feed the error output back as context, and continue refining until mypy passes or a maximum of 3 refinement cycles is reached — with the CLAUDE.md specifying the exact mypy configuration and common type annotation patterns for DataFrames",
+        "C": "Pre-generate type stubs for all DataForge classes so mypy always passes on first attempt",
+        "D": "Disable mypy strict mode and use a more lenient type checking configuration"
+      },
+      "correctAnswer": "B",
+      "explanation": "Claude Code's iterative refinement workflow enables automatic edit-check-fix cycles. The correct setup combines: (1) a post-generation verification step that runs mypy --strict on the generated file, (2) error feedback that includes mypy's output as context for the next refinement attempt, (3) a bounded loop (max 3 cycles) to prevent infinite refinement, and (4) CLAUDE.md context that documents common type patterns (e.g., 'Use pd.DataFrame as the type annotation, not DataFrame', 'All Optional parameters must have explicit None defaults'). This converts a multi-round manual process into an automated workflow. Option A is a prompt suggestion, not a configured workflow. Option C is impractical for a large evolving codebase. Option D sacrifices code quality to avoid the problem.",
+      "examTrap": "Option C sounds thorough but is impractical — type stubs would need constant maintenance and can't cover dynamically generated code patterns. The iterative approach is more robust because it handles any type error, including novel ones.",
+      "conceptsTested": ["iterative refinement", "edit-check-fix cycle", "mypy integration", "bounded refinement loops"]
+    },
+    {
+      "id": "cg-q05",
+      "domain": 3,
+      "taskStatement": "3.4",
+      "difficulty": "advanced",
+      "scenario": "DataForge is planning a major refactoring: migrating all pipeline stages from pandas to polars for performance improvements. This will touch 47 files across src/forge/, update 32 test files, and modify 15 YAML config files. A senior engineer wants to use Claude Code's plan mode to review the migration strategy before any code changes are made. The engineer is concerned about ensuring that the migration plan captures all dependencies and identifies high-risk changes.",
+      "question": "How should plan mode be used to safely orchestrate this large-scale refactoring?",
+      "options": {
+        "A": "Ask Claude Code to perform the entire migration in one command and review the git diff afterward",
+        "B": "Use plan mode to generate a comprehensive migration plan that lists every file to be modified, describes the specific changes for each file, identifies dependency ordering (which files must be migrated first), flags high-risk changes (e.g., files with complex DataFrame operations), and estimates the blast radius — then review and approve the plan before switching to execution mode for phased implementation",
+        "C": "Create a separate branch for each file and migrate them independently",
+        "D": "Write a sed script to find-and-replace pandas imports with polars imports"
+      },
+      "correctAnswer": "B",
+      "explanation": "Plan mode separates planning from execution, which is essential for high-risk refactoring. A well-structured migration plan should include: (1) an inventory of all affected files grouped by module, (2) specific change descriptions for each file (not just 'update imports' but 'replace pd.DataFrame with pl.DataFrame, convert .groupby().agg() to .group_by().agg()'), (3) dependency ordering — base utility files must be migrated before stages that import them, (4) risk assessment — files with complex operations like pivot tables or multi-index operations need extra attention, (5) blast radius — which downstream systems and tests are affected. After review, execution proceeds in phases: utilities first, then stages, then tests, then configs. Option A is reckless for a 94-file change. Option C creates merge hell with 47+ branches. Option D cannot handle the semantic differences between pandas and polars APIs.",
+      "examTrap": "Option C seems safe ('small changes, easy to review') but creates a coordination nightmare — pandas-to-polars migration has cross-file dependencies that cannot be resolved in isolation. A stage migrated to polars will break if its utility module still uses pandas.",
+      "conceptsTested": ["plan mode", "change planning", "dependency ordering", "risk assessment", "phased execution"]
+    }
+  ],
+  "walkthrough": "Step 1: Establish the CLAUDE.md Hierarchy — Create the root CLAUDE.md with project-wide conventions: Python 3.12, pytest, Black (line-length 100), isort (profile: black), mypy strict mode. Document the Pipeline-Stage-Transform architectural pattern. Create subdirectory CLAUDE.md files for tests/ (pytest conventions, fixture usage, parametrized tests), configs/ (YAML schema documentation), and security/ (explicit 'do not modify' instruction as defense-in-depth alongside path rules). Reference: src/config/claude-md.ts shows CLAUDE.md processing.\n\nStep 2: Configure Path Rules — Set up path rules to enforce access restrictions: security/** → blocked (prevents both read and write), configs/production/** → read-only (allows context reading), .env* → blocked (credential protection). Test that rules are enforced by attempting to read/write restricted files. Reference: src/config/path-rules.ts implements glob-based path rule matching.\n\nStep 3: Create Custom Skills — Build two SKILL.md files: (1) 'generate-tests' skill that takes a module path, reads the module, identifies stage classes, and generates comprehensive pytest test files with fixtures, parametrization, and edge cases; (2) 'add-pipeline-stage' skill that creates a new stage class, its tests, YAML config entry, and registry update. Each skill includes concrete examples of correct output. Reference: src/config/slash-commands.ts shows skill/command patterns.\n\nStep 4: Configure Iterative Refinement — Set up Claude Code to automatically run mypy --strict after code generation. Configure the refinement loop: generate code → run mypy → if errors, feed output back to Claude Code for fixes → repeat (max 3 cycles). Add common type annotation patterns to CLAUDE.md so the first-attempt success rate improves over time.\n\nStep 5: Set Up Plan Mode for Refactoring — Configure plan mode to activate for large-scale changes (>5 files affected). The plan template should include: file inventory, change descriptions, dependency graph, risk assessment, and phased execution order. Train the team on the plan-review-execute workflow. Reference: src/config/plan-mode.ts implements plan mode logic.\n\nStep 6: Validate the Configuration — Test each component: verify CLAUDE.md hierarchy merging works correctly, confirm path rules block/restrict as expected, run both skills on sample modules, trigger iterative refinement with intentionally type-incorrect code, and use plan mode on a small refactoring to verify the plan output format.",
+  "relatedFiles": [
+    "src/config/claude-md.ts",
+    "src/config/path-rules.ts",
+    "src/config/slash-commands.ts",
+    "src/config/plan-mode.ts",
+    "src/agents/workflow-enforcer.ts"
+  ]
+}

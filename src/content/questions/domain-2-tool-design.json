@@ -434,5 +434,181 @@
       "built-in tool sufficiency",
       "tool design judgment"
     ]
+  },
+  {
+    "id": "d2-q21",
+    "domain": 2,
+    "taskStatement": "2.2",
+    "difficulty": "intermediate",
+    "scenario": "A travel booking agent uses a search_flights tool that queries an airline API. A user asks to find direct flights from SFO to JFK on December 25th. The API responds successfully with HTTP 200 but returns zero matching flights because no airline operates that specific route on that date. The developer is deciding how the tool result should be structured. Currently the tool throws a NoResultsError when zero flights are found, which Claude interprets as a tool failure and tells the user 'I encountered an error searching for flights.' The user is confused because the search worked — there simply were no flights available on that date.",
+    "question": "How should the search_flights tool handle a successful query that returns zero results?",
+    "options": {
+      "A": "Return a structured result like { results: [], message: 'No direct flights found for this route and date' } so Claude can relay the empty outcome to the user as a valid finding",
+      "B": "Throw a NoResultsError to signal to Claude that no data was found, allowing the error handler to generate a user-friendly message",
+      "C": "Return null so Claude knows the search produced nothing and can generate its own explanation of why no flights exist",
+      "D": "Retry the search automatically with relaxed parameters such as adding connecting flights, since empty results indicate the query was too restrictive"
+    },
+    "correctAnswer": "A",
+    "explanation": "An empty result set from a successful query is NOT an error — it is valid information meaning 'we searched and found nothing.' Returning a structured empty result lets Claude accurately communicate the outcome. Option B conflates 'no matches' with 'search failed,' causing Claude to report errors when none occurred. Option C loses context about what was searched. Option D silently changes the user's request without consent, and the tool should not make autonomous decisions about query parameters.",
+    "examTrap": "Option B feels like standard error handling, but throwing errors for empty results is a common anti-pattern that confuses Claude about whether the tool actually worked.",
+    "conceptsTested": [
+      "empty results vs errors",
+      "tool result design",
+      "successful empty responses"
+    ]
+  },
+  {
+    "id": "d2-q22",
+    "domain": 2,
+    "taskStatement": "2.2",
+    "difficulty": "advanced",
+    "scenario": "A customer support agent has a lookup_account tool that queries a PostgreSQL database. During a conversation, the agent calls lookup_account with email 'jane@example.com'. The database connection times out after 30 seconds because the database server is under heavy load. In a separate conversation five minutes later, another user asks the agent to look up 'nonexistent@fake.com' — the query executes successfully in 50ms but returns zero rows because no account exists with that email. The development team is debating whether both situations should return the same error response structure, since in both cases the user does not receive account data.",
+    "question": "Which statement correctly distinguishes these two scenarios for tool result design?",
+    "options": {
+      "A": "Both should return an error because in both cases the tool failed to provide the requested account information to Claude",
+      "B": "The connection timeout is an error because the tool could not execute the query, while zero rows is a valid empty result because the query executed successfully — only the timeout should use is_error: true",
+      "C": "The zero-rows case should return an error because a missing account means the user provided invalid input, while the timeout should silently retry without informing Claude",
+      "D": "Neither should be treated as an error — the timeout should return an empty result with a retry suggestion, and the zero-rows case should return null"
+    },
+    "correctAnswer": "B",
+    "explanation": "The critical distinction is whether the tool successfully executed its operation. A connection timeout means the tool COULD NOT perform the search — that is a genuine error deserving is_error: true. Zero rows means the tool DID perform the search and found nothing — that is a valid result. Option A incorrectly treats successful queries as errors. Option C blames the user for data that does not exist and hides infrastructure problems. Option D masks real infrastructure failures by presenting them as empty results, which prevents Claude from communicating the actual problem to the user.",
+    "examTrap": "Option A seems reasonable because neither case provides account data, but the distinction between 'could not search' and 'searched and found nothing' is fundamental to tool result design.",
+    "conceptsTested": [
+      "error vs empty result distinction",
+      "is_error flag usage",
+      "infrastructure errors vs data absence"
+    ]
+  },
+  {
+    "id": "d2-q23",
+    "domain": 2,
+    "taskStatement": "2.5",
+    "difficulty": "foundation",
+    "scenario": "A developer joins a new Python monorepo with hundreds of files spread across multiple directories including src/, tests/, scripts/, and docs/. Before making changes, they want to understand the project structure by finding all Python files (files ending in .py) across the entire repository. They open Claude Code and consider which built-in tool to use. The repository has .py files, .pyc files, .pyi stub files, and various configuration files like setup.cfg and pyproject.toml. The developer specifically wants to locate source files by their filename extension, not search inside file contents.",
+    "question": "Which Claude Code built-in tool should the developer use to find all .py files?",
+    "options": {
+      "A": "Glob — it matches files by name patterns like **/*.py, which is exactly designed for finding files by extension across directories",
+      "B": "Grep — it can search for the .py extension string across the filesystem to locate Python files",
+      "C": "Read — it can scan directory listings recursively to find files matching a pattern",
+      "D": "Bash with find command — built-in tools cannot handle recursive file pattern matching"
+    },
+    "correctAnswer": "A",
+    "explanation": "Glob is purpose-built for matching files by name patterns. The pattern **/*.py efficiently finds all Python files across all subdirectories. Option B is wrong because Grep searches file CONTENTS, not file names — it would find files that contain the text '.py' inside them, not files named with the .py extension. Option C is wrong because Read retrieves file contents, not file listings. Option D is wrong because Glob handles this natively without needing shell commands.",
+    "examTrap": "Option B is the classic trap — Grep sounds like it could 'search for .py files' but it searches file contents, not file names. This Glob vs Grep distinction is a key exam concept.",
+    "conceptsTested": [
+      "Glob vs Grep distinction",
+      "file name pattern matching",
+      "built-in tool selection"
+    ]
+  },
+  {
+    "id": "d2-q24",
+    "domain": 2,
+    "taskStatement": "2.5",
+    "difficulty": "intermediate",
+    "scenario": "A security engineer is auditing a large Python codebase to find every file that imports the anthropic SDK. The codebase has 400+ Python files across multiple packages. The engineer needs to find all files that contain the line 'import anthropic' or 'from anthropic import' anywhere in their source code. They know the files are all .py files, but they need to search the actual content of each file to determine which ones use the Anthropic SDK. The engineer opens Claude Code and considers which built-in tool will most efficiently accomplish this content-based search across hundreds of files.",
+    "question": "Which Claude Code built-in tool should the engineer use to find files containing 'import anthropic'?",
+    "options": {
+      "A": "Glob with pattern **/*anthropic* — this will match any file with 'anthropic' in its path or name",
+      "B": "Grep with pattern 'import anthropic' scoped to **/*.py files — it searches file contents for matching text patterns",
+      "C": "Read each .py file individually and check if it contains the import statement",
+      "D": "Bash with a custom Python script that opens every file and searches for the string"
+    },
+    "correctAnswer": "B",
+    "explanation": "Grep is designed to search file CONTENTS for text patterns. It efficiently scans all .py files for 'import anthropic' and returns matching files and lines. Option A is wrong because Glob matches file NAMES, not contents — **/*anthropic* would only find files with 'anthropic' in their filename, not files that import the module. Option C would work but is extremely inefficient, requiring hundreds of individual Read calls. Option D adds unnecessary complexity when a built-in tool handles this directly.",
+    "examTrap": "Option A is tempting because Glob seems like it could 'search for anthropic,' but Glob only matches filenames and paths — it cannot look inside files at all.",
+    "conceptsTested": [
+      "Grep for content search",
+      "Glob vs Grep distinction",
+      "content-based file discovery"
+    ]
+  },
+  {
+    "id": "d2-q25",
+    "domain": 2,
+    "taskStatement": "2.5",
+    "difficulty": "advanced",
+    "scenario": "A Claude Code agent is modifying a large configuration file (2,500 lines) that contains complex nested YAML structures. The agent uses the Edit tool to replace a 15-line block defining a database connection pool. The Edit tool fails with an error indicating it cannot find the exact match for the old_str parameter because the file was recently reformatted and whitespace changed between the agent reading the file and attempting the edit. The agent needs to complete the modification to proceed with the deployment pipeline. The developer managing this agent wants to define a fallback strategy in the CLAUDE.md to handle Edit tool failures gracefully without requiring human intervention.",
+    "question": "What is the recommended fallback when the Edit tool fails on a file modification?",
+    "options": {
+      "A": "Retry the Edit tool with a larger context window in old_str to increase the chance of a unique match",
+      "B": "Fall back to a Read → modify in memory → Write sequence — read the current file contents, apply the change programmatically, and write the entire file back",
+      "C": "Use Bash to run sed or awk to perform the text replacement since shell tools handle whitespace more flexibly",
+      "D": "Skip the modification and log a warning for the human operator to handle manually"
+    },
+    "correctAnswer": "B",
+    "explanation": "The Read → modify → Write pattern is the documented reliability fallback for Edit failures. Reading the current file ensures you have the actual content (including any whitespace changes), modifying in memory gives full control, and Write replaces the file atomically. Option A may work for minor issues but does not address fundamental content drift. Option C introduces fragile shell text processing on complex YAML and risks corruption. Option D breaks automation and defeats the purpose of an autonomous agent.",
+    "examTrap": "Option A seems like the logical first step, but when the file has changed underneath you, retrying Edit without re-reading the file will keep failing. The Read→Write pattern is the curriculum's taught reliability pattern.",
+    "conceptsTested": [
+      "Edit tool fallback pattern",
+      "Read-modify-Write reliability",
+      "tool failure recovery"
+    ]
+  },
+  {
+    "id": "d2-q26",
+    "domain": 2,
+    "taskStatement": "2.3",
+    "difficulty": "foundation",
+    "scenario": "A developer is building a knowledge-base assistant where the first user message always requires looking up relevant documentation before generating a response. The developer wants to guarantee that Claude calls the lookup_docs tool on the very first turn rather than attempting to answer from its training data. In subsequent turns, Claude should be free to decide whether another lookup is needed or whether it can respond directly. The developer is configuring the tool_choice parameter in the API request and reviewing the available options: auto, any, none, and tool (with a specific name).",
+    "question": "Which tool_choice configuration forces Claude to call the lookup_docs tool on the first turn?",
+    "options": {
+      "A": "tool_choice: { type: 'auto' } — Claude will automatically choose lookup_docs when it is relevant",
+      "B": "tool_choice: { type: 'any' } — Claude must use some tool, and since lookup_docs is most relevant it will choose it",
+      "C": "tool_choice: { type: 'tool', name: 'lookup_docs' } — this forces Claude to call exactly the lookup_docs tool",
+      "D": "tool_choice: { type: 'none' } with a system prompt instruction saying 'Always call lookup_docs first'"
+    },
+    "correctAnswer": "C",
+    "explanation": "Setting tool_choice to { type: 'tool', name: 'lookup_docs' } forces Claude to invoke that specific tool. This is the only option that guarantees lookup_docs is called. Option A lets Claude decide, and it may skip the tool if it thinks it can answer directly. Option B forces a tool call but does not guarantee WHICH tool is selected. Option D disables tool use entirely, making it impossible for Claude to call any tool regardless of system prompt instructions.",
+    "examTrap": "Option B is tempting because it forces tool use, but 'any' only guarantees SOME tool is called — if multiple tools exist, Claude might pick the wrong one.",
+    "conceptsTested": [
+      "tool_choice type: tool",
+      "forcing specific tool invocation",
+      "tool_choice modes"
+    ]
+  },
+  {
+    "id": "d2-q27",
+    "domain": 2,
+    "taskStatement": "2.3",
+    "difficulty": "intermediate",
+    "scenario": "A developer is building a multi-tool research assistant with five tools: search_web, search_academic, search_news, summarize_document, and extract_citations. The developer wants to ensure that Claude always uses at least one tool to gather information before responding to the user's research question, but the developer does not want to prescribe which specific tool Claude should use — Claude should reason about which tool is most appropriate based on the query. For example, a question about recent events should trigger search_news, while a question about published studies should trigger search_academic. The developer needs the right tool_choice setting to enforce tool use without restricting tool selection.",
+    "question": "Which tool_choice configuration ensures Claude calls some tool without specifying which one?",
+    "options": {
+      "A": "tool_choice: { type: 'auto' } — Claude will decide to use a tool because the system prompt says to",
+      "B": "tool_choice: { type: 'any' } — forces Claude to use at least one tool while letting it choose which one based on the query",
+      "C": "tool_choice: { type: 'none' } — disables tool selection so Claude focuses on reasoning first before tools are re-enabled",
+      "D": "tool_choice: { type: 'tool', name: 'search_web' } — defaulting to web search covers the most common case"
+    },
+    "correctAnswer": "B",
+    "explanation": "tool_choice: { type: 'any' } guarantees Claude will invoke a tool but leaves the selection to Claude's judgment. This is ideal when you want mandatory tool use with flexible selection. Option A does not guarantee tool use — Claude may skip tools and answer from training data even with system prompt instructions. Option C disables all tools. Option D forces a specific tool, removing Claude's ability to choose the most appropriate one for each query type.",
+    "examTrap": "Option A seems safe because a system prompt instruction should work, but auto means Claude CAN skip tools — there is no enforcement, only a suggestion.",
+    "conceptsTested": [
+      "tool_choice type: any",
+      "mandatory tool use",
+      "flexible tool selection"
+    ]
+  },
+  {
+    "id": "d2-q28",
+    "domain": 2,
+    "taskStatement": "2.3",
+    "difficulty": "advanced",
+    "scenario": "A developer builds a multi-turn customer service agent with tools for looking up orders, checking inventory, and processing returns. To ensure thorough responses, the developer sets tool_choice: { type: 'any' } on EVERY turn of the conversation. During testing, the agent successfully looks up orders and checks inventory, but it never produces a final text response to the customer. After calling process_return, the agent calls check_inventory again unnecessarily, then calls lookup_order again, looping through tools without ever delivering a summary to the user. The conversation grows indefinitely with repeated tool calls and no resolution.",
+    "question": "What is the root cause of the agent's inability to deliver a final response?",
+    "options": {
+      "A": "The tools are not returning a 'done' flag to signal completion to Claude",
+      "B": "Using tool_choice: { type: 'any' } on every turn forces Claude to always call a tool, preventing it from ever producing a text-only response to the user — it should be used only on the first turn and then switched to 'auto'",
+      "C": "The system prompt needs an explicit instruction telling Claude when to stop using tools and respond with text",
+      "D": "The agent needs a maximum turn limit to force termination after a set number of tool calls"
+    },
+    "correctAnswer": "B",
+    "explanation": "tool_choice: { type: 'any' } forces Claude to call a tool on every turn, which means it can NEVER produce a text-only response. The correct pattern is to use 'any' on the first turn to force initial data gathering, then switch to 'auto' for subsequent turns so Claude can choose between making additional tool calls or delivering a final text response. Option A adds unnecessary protocol complexity. Option C cannot override tool_choice enforcement — system prompts are weaker than API parameters. Option D is a band-aid that does not address the root cause and still produces no final response.",
+    "examTrap": "Option C sounds reasonable because system prompts often guide behavior, but tool_choice: 'any' is an API-level enforcement that system prompt instructions cannot override.",
+    "conceptsTested": [
+      "tool_choice anti-patterns",
+      "any vs auto switching",
+      "multi-turn tool_choice strategy"
+    ]
   }
 ]

@@ -1,0 +1,106 @@
+{
+  "id": "scenario-ci-cd-pipeline",
+  "title": "Claude Code in CI/CD Pipeline",
+  "description": "You are the DevOps architect at ShipFast, a fintech startup that processes payment transactions for 15,000 merchant accounts. The engineering team of 35 developers ships code to production 8–12 times per day using a GitHub Actions-based CI/CD pipeline. ShipFast has adopted Claude Code as its primary AI coding assistant and now wants to integrate it into the CI/CD pipeline for automated code review, test generation, security scanning, and deployment validation.\n\nThe primary integration point is automated pull request review. When a developer opens a PR, a GitHub Actions workflow should invoke Claude Code in non-interactive mode (using the -p flag) to review the diff, identify potential issues, and post review comments directly on the PR. The review must cover: (1) code correctness — logic errors, edge cases, null handling; (2) security — SQL injection, XSS, credential exposure, insecure API usage; (3) performance — N+1 queries, unbounded loops, memory leaks; (4) compliance — PCI-DSS requirements for payment processing code (encryption at rest, audit logging, access control).\n\nThe output from Claude Code must be machine-parseable. Raw text output is insufficient for CI/CD integration — the pipeline needs structured JSON output (using --output-format json) that includes: a list of findings with severity levels (critical, high, medium, low), file paths and line numbers for each finding, categorized issue types, and a summary recommendation (approve, request changes, or block). The GitHub Actions workflow parses this JSON and takes appropriate action: posting inline review comments for medium/low findings, requesting changes for high findings, and blocking the PR for critical findings.\n\nSecurity is paramount. Claude Code running in CI/CD must not have access to production credentials, customer data, or deployment keys. The CI/CD environment uses short-lived OIDC tokens for GitHub Actions, and Claude Code's permissions must be scoped to read-only access to the repository code, with no ability to push commits, merge PRs, or access external services. The Anthropic API key used for Claude Code must be stored as a GitHub Actions secret and rotated quarterly.\n\nWorkflow enforcement adds another layer of complexity. ShipFast's deployment process requires: (1) all CI checks must pass before merge, (2) at least one human approval from a senior engineer, (3) Claude Code's review must not have any unresolved critical findings, (4) security-sensitive files (src/payments/, src/auth/, configs/production/) must have an additional human security review, and (5) deployment to production requires a deployment ticket linked to the PR. The GitHub Actions workflow must enforce these rules programmatically.\n\nThe team also wants Claude Code to generate missing tests. When a PR introduces new code without corresponding tests, Claude Code should generate test cases covering the happy path, error cases, and edge cases. The generated tests should be committed to a separate 'ai-generated-tests' branch that the developer can review and cherry-pick into their PR.\n\nA critical concern is cost control. Each PR review invocation of Claude Code costs approximately $0.15–0.50 depending on diff size. With 40–60 PRs per day, the monthly cost could range from $180 to $900. The system needs usage tracking, per-PR cost limits ($2.00 maximum per review), and alerting when monthly spending exceeds the budget threshold.\n\nPerformance targets: PR review completion within 90 seconds for standard PRs (<500 lines changed), structured JSON output for every invocation, zero false-positive critical findings per week (measured by developer feedback), and 99.5% CI pipeline availability.",
+  "domains": [3, 1, 5],
+  "questions": [
+    {
+      "id": "ci-q01",
+      "domain": 3,
+      "taskStatement": "3.6",
+      "difficulty": "foundation",
+      "scenario": "ShipFast wants to run Claude Code in their GitHub Actions workflow to review pull requests automatically. The workflow needs to pass the PR diff to Claude Code, receive a structured review, and post comments on the PR. A junior DevOps engineer proposes running Claude Code interactively in the CI environment and parsing its terminal output.",
+      "question": "What is the correct approach to invoke Claude Code in a CI/CD pipeline for automated PR review?",
+      "options": {
+        "A": "Run Claude Code interactively in the CI environment and capture terminal output with script",
+        "B": "Use Claude Code's non-interactive mode with the -p flag to pass the review prompt directly, combined with --output-format json to receive machine-parseable structured output that the pipeline can process programmatically",
+        "C": "Use the Anthropic API directly instead of Claude Code to avoid CI/CD integration complexity",
+        "D": "Run Claude Code in a Docker container with a virtual terminal emulator"
+      },
+      "correctAnswer": "B",
+      "explanation": "Claude Code provides specific flags for CI/CD integration: the -p flag enables non-interactive mode by passing a prompt directly as a command-line argument (no terminal interaction required), and --output-format json produces structured JSON output instead of human-readable text. This combination is purpose-built for pipeline integration: the workflow constructs a prompt containing the PR diff, passes it via -p, receives JSON output with findings, and processes the structured data to post review comments. Option A is fragile — parsing terminal output with ANSI codes and dynamic formatting is unreliable. Option C loses Claude Code's code understanding capabilities (CLAUDE.md context, codebase awareness). Option D adds unnecessary complexity when -p already solves the non-interactive requirement.",
+      "examTrap": "Option C ('just use the API directly') seems pragmatic but loses Claude Code's unique value: it understands the repository's CLAUDE.md conventions, has codebase-aware context, and provides the -p/--output-format flags specifically designed for CI/CD. Raw API calls would require rebuilding this functionality.",
+      "conceptsTested": ["-p flag", "--output-format json", "non-interactive mode", "CI/CD integration"]
+    },
+    {
+      "id": "ci-q02",
+      "domain": 3,
+      "taskStatement": "3.6",
+      "difficulty": "intermediate",
+      "scenario": "ShipFast's CI pipeline invokes Claude Code with -p to review PR diffs. The structured JSON output must categorize findings by severity (critical, high, medium, low) and include file paths and line numbers. The pipeline needs to take different actions based on severity: post inline comments for medium/low, request changes for high, and block the PR for critical. The team needs to ensure the JSON output consistently follows the expected schema.",
+      "question": "How should the pipeline ensure Claude Code's JSON output reliably conforms to the expected schema for automated processing?",
+      "options": {
+        "A": "Trust that --output-format json always produces consistent output and parse it directly",
+        "B": "Define an explicit output schema in the prompt passed via -p — specifying the exact JSON structure with required fields (severity, file, line, category, message), valid enum values for severity, and a concrete example of expected output — then validate the received JSON against a Zod schema before processing, with a retry mechanism for schema validation failures",
+        "C": "Use regex to extract findings from the raw text output instead of relying on JSON formatting",
+        "D": "Post-process the JSON output with a separate formatting script that normalizes any variations"
+      },
+      "correctAnswer": "B",
+      "explanation": "Reliable structured output in CI/CD requires a defense-in-depth approach: (1) the prompt must explicitly specify the expected JSON structure — including field names, types, required vs optional, valid enum values, and a concrete example. This maximizes the probability of correct output on the first attempt; (2) the pipeline must validate received JSON against a strict schema (Zod is ideal for TypeScript pipelines) before acting on it — catching any deviations before they cause incorrect PR actions; (3) a retry mechanism handles the rare cases where output doesn't conform — the retry prompt includes the validation error, helping Claude Code self-correct. Option A is risky — LLM output can vary despite the format flag. Option C abandons structured output entirely. Option D accepts non-conforming output and tries to fix it, which is less reliable than getting it right from the source.",
+      "examTrap": "Option A ('just trust the flag') is the most dangerous trap in CI/CD integration. While --output-format json produces JSON, the STRUCTURE of that JSON is determined by Claude's response, not guaranteed by the flag. The flag controls format (JSON vs text), not schema (which fields are included).",
+      "conceptsTested": ["structured output", "schema validation", "output format reliability", "CI/CD robustness", "retry mechanisms"]
+    },
+    {
+      "id": "ci-q03",
+      "domain": 5,
+      "taskStatement": "5.5",
+      "difficulty": "intermediate",
+      "scenario": "ShipFast's deployment process requires multiple approval gates before code reaches production. The CI pipeline must enforce: all CI checks pass, at least one senior engineer approves, Claude Code's review has no unresolved critical findings, and security-sensitive files require an additional security team review. The current pipeline has these checks as independent GitHub Actions jobs with no coordination.",
+      "question": "How should the workflow enforcement be architected to ensure all approval gates are met before merge, while maintaining clear audit trails?",
+      "options": {
+        "A": "Use GitHub branch protection rules alone — they cover all the required checks",
+        "B": "Implement a workflow enforcement layer that: programmatically verifies all gate conditions (CI status, human approvals, Claude Code review status, security review for sensitive files), produces a structured approval record documenting which gates passed and when, and sets the final merge check status — combining GitHub branch protection for basic rules with a custom enforcement job that validates the complex multi-gate requirements",
+        "C": "Have Claude Code make the merge decision based on its review findings",
+        "D": "Send a Slack notification listing all required approvals and trust engineers to verify before merging"
+      },
+      "correctAnswer": "B",
+      "explanation": "Complex deployment workflows require programmatic enforcement beyond what GitHub branch protection provides natively. The workflow enforcement layer: (1) queries all gate conditions via GitHub API — CI job statuses, review approvals with reviewer roles, Claude Code review output, and file-level security review requirements; (2) evaluates complex rules that branch protection can't express — e.g., 'security review required IF diff touches src/payments/'; (3) produces a structured approval record for audit compliance — documenting which gates passed, timestamps, and reviewer identities; (4) sets a final required status check that blocks merge until all conditions are met. Option A can't handle conditional requirements (security review only for certain files). Option C gives AI control over deployment decisions — unacceptable for financial systems. Option D relies on manual verification of automated requirements.",
+      "examTrap": "Option A (branch protection alone) handles simple cases but can't express conditional logic like 'require security review IF files in src/payments/ are modified.' The exam tests understanding of when built-in GitHub features are sufficient vs when custom enforcement is needed.",
+      "conceptsTested": ["workflow enforcement", "approval gates", "human-in-the-loop", "audit trails", "conditional requirements"]
+    },
+    {
+      "id": "ci-q04",
+      "domain": 1,
+      "taskStatement": "1.4",
+      "difficulty": "advanced",
+      "scenario": "ShipFast needs to enforce that Claude Code's CI/CD integration cannot be used to bypass security controls. A malicious or compromised developer could potentially: modify the Claude Code review prompt to suppress critical findings, alter the JSON parsing logic to ignore high-severity issues, or use Claude Code's -p flag to execute arbitrary code changes in the CI environment. The security team requires that the review pipeline itself is tamper-resistant.",
+      "question": "What architectural safeguards should be implemented to prevent manipulation of the Claude Code CI/CD integration?",
+      "options": {
+        "A": "Store the review prompt in a separate private repository that developers cannot modify",
+        "B": "Implement a tamper-resistant pipeline architecture: store the review prompt and parsing logic in a CODEOWNERS-protected directory requiring security team approval for changes, use a reusable GitHub Actions workflow (called workflow) defined in a separate infrastructure repository so PR authors cannot modify the review pipeline, enforce that Claude Code runs with read-only repository access and no write permissions, and log all pipeline invocations with input hashes for audit verification",
+        "C": "Run Claude Code's review twice — once in the PR author's workflow and once in a separate security workflow — and compare results",
+        "D": "Require manual review of every Claude Code output before any PR action is taken"
+      },
+      "correctAnswer": "B",
+      "explanation": "Tamper-resistant CI/CD requires defense-in-depth: (1) CODEOWNERS protection ensures that modifications to the review prompt, parsing logic, and workflow configuration require security team approval — a developer cannot unilaterally weaken the review criteria; (2) reusable workflows (GitHub Actions 'called workflows') execute in the context of the infrastructure repository, not the PR's branch — so modifications to the PR branch cannot alter the review pipeline; (3) read-only permissions ensure Claude Code can analyze code but cannot make changes, push commits, or access external services; (4) input hashing and audit logging enable post-hoc verification that the pipeline was not manipulated. Option A only protects the prompt, not the parsing logic or workflow. Option C doubles costs without preventing manipulation of the comparison logic. Option D defeats the purpose of automation.",
+      "examTrap": "Option C (run twice and compare) sounds like a strong security control, but it has a fundamental flaw — if the comparison logic is in the PR branch, the attacker can modify it. Security controls must run in a context the attacker cannot influence.",
+      "conceptsTested": ["workflow enforcement", "tamper resistance", "CODEOWNERS", "reusable workflows", "read-only permissions", "defense in depth"]
+    },
+    {
+      "id": "ci-q05",
+      "domain": 5,
+      "taskStatement": "5.6",
+      "difficulty": "advanced",
+      "scenario": "ShipFast processes payment transactions under PCI-DSS compliance requirements. Every code change to payment processing modules (src/payments/, src/auth/) must have a complete audit trail: who authored the change, what was changed, when it was reviewed, what Claude Code's automated review found, who approved the change, and what deployment ticket authorizes the release. The compliance team needs to generate quarterly audit reports showing this chain of evidence for every production deployment.",
+      "question": "How should the CI/CD pipeline capture and structure audit data to support PCI-DSS compliance reporting?",
+      "options": {
+        "A": "Use GitHub's built-in PR history and commit log as the audit trail",
+        "B": "Implement a structured audit event system that emits immutable, timestamped events at each pipeline stage — PR opened (author, files changed, security-sensitive flag), Claude Code review (findings, severity, raw output hash), human review (reviewer identity, approval timestamp, review scope), deployment ticket link verified, deployment executed (environment, version, deployment ticket ID) — with all events stored in an append-only audit log that supports compliance report generation",
+        "C": "Have Claude Code generate a compliance report as part of its PR review",
+        "D": "Manually log each approval step in a spreadsheet shared with the compliance team"
+      },
+      "correctAnswer": "B",
+      "explanation": "PCI-DSS compliance requires a verifiable chain of evidence for every change to payment processing code. A structured audit event system provides: (1) immutable events — append-only storage prevents retroactive modification of audit records; (2) timestamped pipeline stage events — each gate in the deployment process (PR creation, AI review, human review, deployment) generates a discrete event with all relevant metadata; (3) security-sensitive flagging — events for changes to src/payments/ and src/auth/ are automatically tagged for compliance review; (4) hash-based integrity — Claude Code's raw output is hashed and stored, enabling verification that the review actually occurred with that specific output; (5) report generation — structured events can be queried and formatted for quarterly compliance reports. Option A lacks structured metadata and doesn't capture CI-specific events like Claude Code's review output. Option C puts compliance responsibility on AI output, which is unreliable. Option D is manual and unscalable.",
+      "examTrap": "Option A (GitHub's built-in history) captures commits and reviews but doesn't capture CI pipeline events — when Claude Code reviewed, what it found, and whether its findings were addressed. PCI-DSS requires the COMPLETE chain, not just the version control portion.",
+      "conceptsTested": ["audit trails", "PCI-DSS compliance", "event sourcing", "immutable logs", "chain of evidence"]
+    }
+  ],
+  "walkthrough": "Step 1: Configure Non-Interactive Claude Code — Set up Claude Code with -p flag for prompt passing and --output-format json for structured output. Define the review prompt template that includes: the PR diff, focus areas (correctness, security, performance, compliance), expected output schema with severity levels, and concrete examples of finding format. Test locally before CI integration. Reference: src/config/ci-integration.ts shows CI configuration patterns.\n\nStep 2: Build the GitHub Actions Workflow — Create a reusable workflow (.github/workflows/claude-review.yml) that triggers on PR events, extracts the diff, invokes Claude Code with the configured prompt, parses the JSON output, validates it against a Zod schema, and takes appropriate action based on finding severity. Store the workflow in the infrastructure repository for tamper resistance. Reference: src/agents/workflow-enforcer.ts implements enforcement logic.\n\nStep 3: Implement Security Controls — Scope Claude Code's CI permissions to read-only repository access. Store the Anthropic API key as a GitHub Actions secret with quarterly rotation. Use CODEOWNERS to protect the review prompt and workflow configuration. Ensure Claude Code cannot access production credentials, customer data, or deployment keys.\n\nStep 4: Build Workflow Enforcement — Implement the multi-gate approval system: CI checks pass → Claude Code review has no critical findings → human senior engineer approval → security team review for sensitive files → deployment ticket linked. Create a custom enforcement job that evaluates all conditions and sets the final merge status check. Reference: src/agents/workflow-enforcer.ts and src/agents/hooks.ts show enforcement patterns.\n\nStep 5: Implement Audit Logging — Build the structured audit event system. Emit events at each pipeline stage with relevant metadata. Store events in an append-only log. Include hash-based integrity verification for Claude Code's output. Build a report generation utility for quarterly PCI-DSS compliance reports.\n\nStep 6: Add Cost Controls — Implement per-PR cost limits ($2.00 maximum), monthly budget tracking, and alerting when spending exceeds thresholds. Track token usage per invocation and correlate with PR size to optimize prompt efficiency.\n\nStep 7: End-to-End Validation — Test the complete pipeline with representative PRs: clean code (should approve), security vulnerability (should block), missing tests (should generate), payment code changes (should require security review). Verify all audit events are captured correctly. Generate a sample compliance report.",
+  "relatedFiles": [
+    "src/config/ci-integration.ts",
+    "src/agents/workflow-enforcer.ts",
+    "src/agents/hooks.ts",
+    "src/agents/loop.ts",
+    "src/context/session-manager.ts"
+  ]
+}

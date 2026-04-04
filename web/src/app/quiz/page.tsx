@@ -2,9 +2,8 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import type { Question, DifficultyLevel } from '@/lib/types';
-import { DOMAIN_NAMES, DOMAIN_COLOURS } from '@/lib/types';
 import { getAllQuestions } from '@/lib/questions';
-import { shuffle, filterQuestions, generateReport, formatTime } from '@/lib/scoring';
+import { shuffle, filterQuestions, generateReport } from '@/lib/scoring';
 import { QuestionCard, ProgressBar, ScoreSummary, DomainFilter } from '@/components';
 import { saveSession } from '@/lib/store';
 
@@ -153,9 +152,25 @@ export default function QuizPage() {
     const isRevealed = revealed.has(currentIndex);
     const answeredCount = answers.size;
 
+    // Score counter — count correct answers so far
+    const correctCount = questions.reduce((acc, q, i) => {
+      const userAnswer = answers.get(i);
+      return acc + (userAnswer === q.correctAnswer ? 1 : 0);
+    }, 0);
+
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <ProgressBar current={currentIndex + 1} total={questions.length} className="mb-6" />
+        {/* Score counter + progress */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <ProgressBar current={currentIndex + 1} total={questions.length} className="flex-1 min-w-[180px]" />
+          <div className="flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 shadow">
+            <span className="text-sm text-slate-400">Score:</span>
+            <span className={`text-sm font-bold ${correctCount > 0 ? 'text-emerald-400' : 'text-slate-300'}`}>
+              {correctCount}/{answeredCount}
+            </span>
+            <span className="text-xs text-slate-500">correct</span>
+          </div>
+        </div>
 
         <QuestionCard
           question={currentQuestion}

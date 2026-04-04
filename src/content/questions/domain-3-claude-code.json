@@ -419,5 +419,137 @@
       "CI loop prevention",
       "commit-based cycle breaking"
     ]
+  },
+  {
+    "id": "d3-q21",
+    "domain": 3,
+    "taskStatement": "3.2",
+    "difficulty": "foundation",
+    "scenario": "A team is setting up custom automation for their Claude Code workflow. They create two markdown files: one in .claude/commands/gen-tests.md that generates unit tests when a developer types /gen-tests, and another in .claude/skills/code-review.md that contains expertise about their code review standards. A new team member asks why there are two separate directories when both files seem to provide instructions to Claude Code. The team lead explains that the directories serve fundamentally different purposes in how Claude Code discovers and invokes the contained instructions.",
+    "question": "What is the key difference between .claude/commands/ and .claude/skills/?",
+    "options": {
+      "A": "Commands are invoked explicitly by the user via slash commands (e.g., /gen-tests), while Skills are auto-matched by Claude Code based on the task description without the user needing to reference them",
+      "B": "Commands and Skills are identical in functionality but organized in separate directories for readability — Claude Code treats them the same way",
+      "C": "Commands run in the main conversation context while Skills always run in an isolated subprocess with no access to conversation history",
+      "D": "Commands are for code generation tasks only, while Skills are for code review and analysis tasks only"
+    },
+    "correctAnswer": "A",
+    "explanation": "Commands are user-invoked via slash commands — the user explicitly types a command name to trigger them. Skills are automatically matched by Claude Code when it determines the current task aligns with the skill description — no user action is needed. Option B is wrong because they have fundamentally different invocation models. Option C conflates invocation with execution context — subprocess behavior is controlled by frontmatter, not directory placement. Option D is wrong because neither is restricted to specific task types.",
+    "examTrap": "Option B is tempting because both use markdown files in .claude/, but the invocation model is the core difference: explicit user action vs automatic task matching.",
+    "conceptsTested": [
+      "commands vs skills distinction",
+      "slash command invocation",
+      "automatic skill matching"
+    ]
+  },
+  {
+    "id": "d3-q22",
+    "domain": 3,
+    "taskStatement": "3.2",
+    "difficulty": "intermediate",
+    "scenario": "A team creates a SKILL.md file at .claude/skills/security-audit.md for performing security reviews. The frontmatter includes 'context: fork'. During testing, a developer is mid-conversation with Claude Code discussing a feature implementation. Claude Code auto-matches the security-audit skill when asked to review the feature code for vulnerabilities. The developer notices that the security audit runs successfully but does not reference any of the earlier conversation about the feature implementation — it starts fresh as if no prior discussion occurred.",
+    "question": "What does 'context: fork' in a SKILL.md frontmatter accomplish?",
+    "options": {
+      "A": "It creates a new git branch (fork) for the skill to make changes in isolation without affecting the main branch",
+      "B": "It creates an isolated subagent context where the skill runs WITHOUT access to the parent conversation history, starting with a clean context window",
+      "C": "It creates a copy of the SKILL.md file that can be modified during execution without changing the original",
+      "D": "It forks the current terminal process so the skill runs in a parallel background thread while the main conversation continues"
+    },
+    "correctAnswer": "B",
+    "explanation": "context: fork creates an isolated subagent context. The skill executes in a fresh context window without the parent conversation history, which prevents context pollution and keeps the skill focused on its specific task. Option A is wrong because context: fork has nothing to do with git branches. Option C is wrong because it does not duplicate the skill file. Option D is wrong because it does not fork OS-level processes — it creates a logical context boundary within Claude Code.",
+    "examTrap": "Option A is tempting because 'fork' strongly suggests git branching, but in SKILL.md frontmatter it refers to context isolation, not version control.",
+    "conceptsTested": [
+      "context: fork in SKILL.md",
+      "subagent context isolation",
+      "skill frontmatter configuration"
+    ]
+  },
+  {
+    "id": "d3-q23",
+    "domain": 3,
+    "taskStatement": "3.2",
+    "difficulty": "intermediate",
+    "scenario": "A platform team creates a SKILL.md for a documentation-generation skill at .claude/skills/gen-docs.md. To ensure the skill only reads code and writes documentation without modifying source files, the frontmatter specifies 'allowed-tools: [Read, Grep, Write]' — intentionally omitting the Edit tool. During a code documentation task, Claude Code auto-matches the gen-docs skill. While generating documentation, Claude Code determines it needs to update an existing source file to add JSDoc comments and attempts to use the Edit tool to modify src/utils.ts inline.",
+    "question": "What happens when the gen-docs skill attempts to use the Edit tool?",
+    "options": {
+      "A": "The Edit tool call succeeds because allowed-tools is only a suggestion that Claude Code considers but does not enforce",
+      "B": "The Edit tool call is blocked because allowed-tools restricts the skill to ONLY the listed tools (Read, Grep, Write), and Edit is not in the list",
+      "C": "Claude Code prompts the user to approve the Edit tool call since it falls outside the allowed list",
+      "D": "The skill automatically falls back to using Write to overwrite the entire file instead of editing it"
+    },
+    "correctAnswer": "B",
+    "explanation": "allowed-tools is an enforcement mechanism, not a suggestion. When specified in SKILL.md frontmatter, it restricts the skill to ONLY the listed tools. Since Edit is not in the allowed list, the call is blocked. This is a security and safety feature that prevents skills from performing unintended operations. Option A is wrong because allowed-tools is enforced, not advisory. Option C is wrong because there is no interactive approval prompt for tool restrictions. Option D is wrong because automatic tool substitution does not occur.",
+    "examTrap": "Option A seems plausible because many configuration directives in other tools are advisory, but allowed-tools is a hard restriction that Claude Code enforces.",
+    "conceptsTested": [
+      "allowed-tools enforcement",
+      "skill tool restrictions",
+      "security boundaries for skills"
+    ]
+  },
+  {
+    "id": "d3-q24",
+    "domain": 3,
+    "taskStatement": "3.2",
+    "difficulty": "advanced",
+    "scenario": "A team builds a SKILL.md at .claude/skills/migrate-schema.md for database schema migrations. The skill needs to know which database the developer wants to migrate (e.g., 'users', 'orders', 'analytics') because the migration logic differs significantly per database. Without this information, the skill would have to guess or ask mid-execution, breaking its automated flow. The team wants Claude Code to prompt the developer for the target database name BEFORE the skill begins execution, so the skill receives the value as a parameter. They are reviewing the SKILL.md frontmatter options to find the right configuration.",
+    "question": "Which SKILL.md frontmatter field should the team use to have Claude Code prompt the user for the database name before skill execution?",
+    "options": {
+      "A": "description: 'Requires database name' — Claude Code parses the description to identify required inputs and prompts for them",
+      "B": "argument-hint: 'Which database to migrate (users, orders, analytics)?' — this tells Claude Code to prompt the user for the specified parameter before running the skill",
+      "C": "required-input: 'database_name' — this declares a required parameter that must be provided before the skill runs",
+      "D": "context: prompt — this mode forces Claude Code to enter an interactive prompt session before executing the skill"
+    },
+    "correctAnswer": "B",
+    "explanation": "argument-hint is the SKILL.md frontmatter field designed for this purpose. It specifies a prompt that Claude Code presents to the user to collect a required parameter before skill execution begins. The skill then receives this value as an argument. Option A is wrong because descriptions are used for task matching, not parameter collection. Option C uses a plausible-sounding field name that does not exist in the SKILL.md specification. Option D is wrong because context: prompt is not a valid context mode — valid modes include fork.",
+    "examTrap": "Option C is very tempting because 'required-input' sounds like exactly what you need, but it is a fabricated field name — argument-hint is the actual SKILL.md frontmatter field for this purpose.",
+    "conceptsTested": [
+      "argument-hint frontmatter",
+      "skill parameter collection",
+      "SKILL.md configuration"
+    ]
+  },
+  {
+    "id": "d3-q25",
+    "domain": 3,
+    "taskStatement": "3.5",
+    "difficulty": "foundation",
+    "scenario": "A developer is using Claude Code to refactor a legacy Express.js API into a new NestJS architecture. The initial results are inconsistent — sometimes Claude Code produces well-structured NestJS controllers with proper decorators, and other times it generates code that mixes Express patterns with NestJS syntax. The developer has tried adding more detailed written instructions to the CLAUDE.md file explaining NestJS conventions, decorators, and module structure, but the output quality remains variable. The developer asks a senior colleague who has extensive Claude Code experience for the single most impactful technique to improve output consistency.",
+    "question": "What is the most effective technique for improving Claude Code output quality and consistency?",
+    "options": {
+      "A": "Provide concrete input/output examples showing exactly what the current code looks like and what the expected refactored code should look like",
+      "B": "Add more detailed written instructions explaining each NestJS convention, decorator, and pattern the code should follow",
+      "C": "Increase the prompt length by repeating key instructions multiple times to reinforce the desired patterns",
+      "D": "Switch to a larger model variant since output inconsistency indicates the current model lacks sufficient capability"
+    },
+    "correctAnswer": "A",
+    "explanation": "Concrete examples are the single most impactful technique for improving Claude Code output quality. Showing a before/after pair of actual code communicates patterns, style, and structure far more effectively than written descriptions alone. Claude Code can extrapolate from examples to handle similar cases consistently. Option B adds more text but written rules are less precise than demonstrated examples. Option C wastes context tokens and does not improve understanding. Option D misidentifies the problem — inconsistency is usually a prompt quality issue, not a model capability issue.",
+    "examTrap": "Option B seems like the right approach because detailed instructions feel thorough, but the curriculum explicitly teaches that examples outperform instructions for consistency.",
+    "conceptsTested": [
+      "examples over instructions",
+      "output quality improvement",
+      "prompt engineering for Claude Code"
+    ]
+  },
+  {
+    "id": "d3-q26",
+    "domain": 3,
+    "taskStatement": "3.5",
+    "difficulty": "advanced",
+    "scenario": "A developer has been iteratively refining their Claude Code prompts for a code migration task but the results are not improving. Their CLAUDE.md says 'Write clean code' and 'Follow best practices' and 'Use modern patterns'. Each iteration, they add more adjectives — 'Write very clean, highly readable, extremely maintainable code' — but the output remains inconsistent. Functions sometimes use arrow syntax and sometimes use function declarations. Error handling varies between try/catch blocks and .catch() chains. Import styles alternate between named imports and default imports. The developer has run six iterations with no measurable improvement in consistency.",
+    "question": "What change will most effectively improve the developer's iterative refinement results?",
+    "options": {
+      "A": "Replace all vague instructions with concrete examples showing actual input code alongside the exact expected output code — for instance, show a function using callbacks and its refactored version using async/await with specific error handling patterns",
+      "B": "Add a numbered checklist of 20+ specific rules covering every code pattern, naming convention, and style decision that Claude Code should follow",
+      "C": "Increase the number of refinement iterations from six to twelve, since iterative improvement requires more cycles to converge on consistent output",
+      "D": "Restructure the CLAUDE.md into sections with headers and bullet points to make the existing vague instructions easier for Claude Code to parse"
+    },
+    "correctAnswer": "A",
+    "explanation": "The root problem is vague instructions like 'clean code' and 'best practices' which are subjective and unactionable. Replacing them with concrete before/after examples gives Claude Code an unambiguous reference for what 'clean' means in this specific codebase. One good example communicates more than dozens of adjectives. Option B creates a long ruleset that is hard to follow consistently and may conflict internally. Option C wastes time — more iterations of vague prompts will not converge. Option D improves formatting but does not fix the fundamental problem of vague content.",
+    "examTrap": "Option B seems thorough because it adds specificity, but a checklist of 20+ rules is hard for any system to apply consistently — examples are more effective than exhaustive rule lists.",
+    "conceptsTested": [
+      "specificity over verbosity",
+      "concrete examples for refinement",
+      "iterative prompt improvement"
+    ]
   }
 ]

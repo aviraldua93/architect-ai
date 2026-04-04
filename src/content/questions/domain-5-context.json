@@ -29,16 +29,17 @@
     "question": "How should the team improve context preservation for long research sessions?",
     "options": {
       "A": "Implement progressive summarization with multiple tiers: keep recent messages verbatim, maintain a detailed summary of the middle period, and a high-level summary of the earliest exchanges — preserving detail proportional to recency",
-      "B": "Store the entire conversation in an external database and retrieve all of it for every API call",
+      "B": "Implement structured retrieval using a vector store to index conversation segments, with key-value extraction for critical facts and context windowing to select only the most relevant segments for each query",
       "C": "Limit sessions to 30 minutes and force users to start new conversations",
       "D": "Use the largest available model context window and disable summarization entirely"
     },
-    "correctAnswer": "A",
-    "explanation": "Progressive summarization creates a multi-tier context structure: recent messages at full fidelity, medium-age content at moderate detail, and oldest content as high-level summaries. This mirrors how human memory works and preserves proportional detail. Option B exceeds context limits for long sessions. Option C limits functionality artificially. Option D postpones the problem and eventually hits the same wall.",
-    "examTrap": "Option D seems like the simplest solution, but even the largest context windows eventually fill up in multi-hour research sessions.",
+    "correctAnswer": "B",
+    "explanation": "Progressive summarization (Option A) is a common anti-pattern because each summarization pass is lossy — it discards nuanced details and causes context drift where the summary gradually diverges from the original conversation. Structured retrieval with context windowing (Option B) preserves original conversation segments intact in a vector store and uses semantic search to retrieve only the most relevant portions for each query, avoiding information loss entirely. Key-value extraction ensures specific data points (names, numbers, decisions) are never lost. Option C limits functionality artificially. Option D postpones the problem — even the largest context windows eventually fill up in multi-hour sessions.",
+    "examTrap": "Option A (progressive summarization) is the most common trap — it sounds sophisticated and mirrors human memory, but each layer of summarization is lossy and introduces drift from the original content.",
     "conceptsTested": [
-      "progressive summarization",
-      "multi-tier context structure"
+      "structured retrieval",
+      "context windowing",
+      "progressive summarization anti-pattern"
     ]
   },
   {
@@ -312,6 +313,90 @@
     "conceptsTested": [
       "comprehensive audit logging with correlation IDs",
       "regulatory compliance trails"
+    ]
+  },
+  {
+    "id": "d5-q16",
+    "domain": 5,
+    "taskStatement": "5.2",
+    "difficulty": "intermediate",
+    "scenario": "An AI-powered technical support agent has attempted to resolve a user's networking issue three consecutive times. Each attempt used a different troubleshooting approach, and all three failed. The agent's confidence scores have declined with each attempt: 0.8 on the first, 0.5 on the second, and 0.2 on the third. The user is becoming frustrated.",
+    "question": "Should the agent escalate to a human support engineer at this point?",
+    "options": {
+      "A": "Yes — three consecutive failures with declining confidence scores (0.8 → 0.5 → 0.2) indicate the agent is operating outside its competence boundary and should escalate immediately",
+      "B": "No — the agent should try at least five different approaches before escalating, as three is too few to exhaust all troubleshooting options",
+      "C": "No — the declining confidence scores are normal and the agent should reset its confidence and try again with a fresh approach",
+      "D": "Yes — but only because the user is frustrated, not because of the confidence scores or failure count"
+    },
+    "correctAnswer": "A",
+    "explanation": "Both signals — consecutive failures (3) and declining confidence (0.8 → 0.5 → 0.2) — independently warrant escalation, and together they form a strong indication that the agent has exceeded its competence boundary. The consecutive failure threshold (typically 3) is a well-established escalation trigger, and monotonically declining confidence confirms the agent is not converging on a solution. Option B risks prolonging a bad experience. Option C ignores meaningful signal. Option D captures only one factor — user frustration alone is not a reliable escalation metric without underlying performance data.",
+    "examTrap": "Option D is partially correct — user frustration matters — but the primary escalation triggers are the measurable signals: consecutive failure count and declining confidence, not subjective user sentiment.",
+    "conceptsTested": [
+      "escalation after consecutive failures",
+      "confidence-based competence boundaries"
+    ]
+  },
+  {
+    "id": "d5-q17",
+    "domain": 5,
+    "taskStatement": "5.6",
+    "difficulty": "foundation",
+    "scenario": "A development team is building an agentic Claude system that processes insurance claims. The team lead asks what information should be logged to create an adequate audit trail for post-hoc analysis of the system's behavior and decisions.",
+    "question": "What should be logged for a comprehensive audit trail?",
+    "options": {
+      "A": "Every tool call (name, parameters, result), every LLM response (model, tokens, stop_reason), every decision point (which path was taken and why), and every data source accessed",
+      "B": "Only errors and exceptions — successful operations do not need logging since they worked correctly",
+      "C": "Only the final output for each claim, since intermediate steps are implementation details that do not matter for auditing",
+      "D": "A daily summary report of how many claims were processed and what percentage succeeded"
+    },
+    "correctAnswer": "A",
+    "explanation": "A comprehensive audit trail requires logging every significant action and decision in the system. Tool calls document what actions were taken, LLM responses capture the model's reasoning, decision points reveal the logic flow, and data source access shows what information informed each step. Option B misses successful-but-incorrect operations that produce wrong results without errors. Option C loses the chain of reasoning needed to understand how the system reached its conclusion. Option D provides operational metrics but zero diagnostic or traceability value.",
+    "examTrap": "Option B is a common engineering instinct — log only errors — but audit trails require tracing correct operations too, especially when a 'successful' operation later turns out to have produced an incorrect result.",
+    "conceptsTested": [
+      "comprehensive audit trail logging",
+      "post-hoc analysis requirements"
+    ]
+  },
+  {
+    "id": "d5-q18",
+    "domain": 5,
+    "taskStatement": "5.4",
+    "difficulty": "intermediate",
+    "scenario": "A developer is debugging a failing coding agent. The agent's logs show an error originating at utils.ts:47 — a TypeError where a function receives undefined instead of an expected object. The developer needs to understand why the wrong data is flowing into this function to fix the agent's behavior.",
+    "question": "What codebase exploration strategy should the developer use to diagnose this issue?",
+    "options": {
+      "A": "Error-driven exploration — follow the stack trace from utils.ts:47 upward through callers to find where the undefined value originates, then examine the data flow into the failing function",
+      "B": "Start from main.ts and read every file top-to-bottom until finding the bug",
+      "C": "Search the codebase for all uses of 'undefined' and fix each one individually",
+      "D": "Delete utils.ts and rewrite it from scratch since the function is clearly broken"
+    },
+    "correctAnswer": "A",
+    "explanation": "Error-driven exploration uses the error as a starting point and traces the execution path backward through the call chain. Starting at utils.ts:47, the developer follows the stack trace to identify which caller passed undefined, then examines why that caller had no value to pass. This is the most efficient strategy when a specific error exists. Option B is exhaustive and inefficient — reading every file wastes time when the error points directly to the problem area. Option C treats symptoms rather than the root cause. Option D is destructive and unnecessary.",
+    "examTrap": "Option B seems thorough but is the opposite of efficient debugging — when you have a specific error location, starting from the entry point and reading linearly ignores the direct signal the error provides.",
+    "conceptsTested": [
+      "error-driven codebase exploration",
+      "stack trace analysis for debugging"
+    ]
+  },
+  {
+    "id": "d5-q19",
+    "domain": 5,
+    "taskStatement": "5.4",
+    "difficulty": "advanced",
+    "scenario": "A coding agent needs to understand how authentication works in an unfamiliar codebase to implement a new feature that requires user identity. No error has occurred — the agent simply needs to map the auth system's architecture: where tokens are created, validated, and revoked, and how user sessions are managed.",
+    "question": "What codebase exploration strategy is best for understanding authentication in this unfamiliar codebase?",
+    "options": {
+      "A": "Pattern-based exploration — search for auth-related keywords (login, token, session, authenticate), follow imports and exports to map the auth module dependency graph, then read the entry points to understand the flow",
+      "B": "Error-driven exploration — introduce a deliberate authentication error and follow the stack trace to find auth code",
+      "C": "Read the entire codebase file by file in alphabetical order until the authentication module is found",
+      "D": "Check only the README file, and if authentication is not documented there, assume the codebase has no auth system"
+    },
+    "correctAnswer": "A",
+    "explanation": "Pattern-based exploration is the optimal strategy when no error exists to guide investigation. Searching for domain-specific keywords (login, token, session) quickly identifies relevant files. Following imports and exports from those files maps the module structure. Reading entry points reveals the auth flow. Option B is wasteful and artificial — deliberately breaking things to find code is inefficient and risks side effects. Option C is extremely slow and unfocused. Option D relies on documentation that may be incomplete or outdated.",
+    "examTrap": "Option B seems clever — 'break it and follow the stack trace' — but error-driven exploration requires a real error. Artificially inducing errors is unreliable, time-consuming, and may not surface the specific code paths you need to understand.",
+    "conceptsTested": [
+      "pattern-based codebase exploration",
+      "keyword search and dependency mapping"
     ]
   }
 ]

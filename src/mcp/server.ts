@@ -30,6 +30,7 @@ import {
   codebaseSearchTool,
   toAnthropicToolDefinition,
 } from "../tools/definitions.js";
+import { ToolError, type ToolErrorType } from "../tools/error-handling.js";
 
 // ---------------------------------------------------------------------------
 // MCP Protocol Types
@@ -234,6 +235,25 @@ export class MCPServer {
           };
       }
     } catch (error) {
+      if (error instanceof ToolError) {
+        const codeMap: Record<ToolErrorType, number> = {
+          validation_error: -32602,  // Invalid params
+          not_found: -32601,         // Method not found
+          rate_limited: -32000,      // Server error (retryable)
+          context_overflow: -32000,  // Server error (retryable)
+          permission_denied: -32600, // Invalid request
+          internal_error: -32603,    // Internal error
+        };
+        return {
+          jsonrpc: "2.0",
+          id: request.id,
+          error: {
+            code: codeMap[error.data.error_type],
+            message: error.message,
+            data: error.data,
+          },
+        };
+      }
       const message =
         error instanceof Error ? error.message : "Internal server error";
       return {

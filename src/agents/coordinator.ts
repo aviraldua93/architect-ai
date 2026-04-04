@@ -43,6 +43,19 @@ import type {
 } from "./types";
 
 // ---------------------------------------------------------------------------
+// SDK NOTE: In the Claude Agent SDK, the coordinator pattern maps to
+// `agent.create_subagent()` for spawning specialist agents. The SDK also
+// provides a `handoff()` primitive — a structured way for one agent to
+// delegate control to another (the coordinator hands off to a subagent,
+// and the subagent's result flows back). Our manual decompose→route→synthesise
+// pipeline is what the SDK's orchestration layer does internally.
+// Key SDK equivalents:
+//   - Coordinator.handle()     → Orchestrator agent with handoff() calls
+//   - Coordinator.decompose()  → The orchestrator's tool that plans subtasks
+//   - Coordinator.synthesise() → The orchestrator's final response aggregation
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Coordinator class
 // ---------------------------------------------------------------------------
 

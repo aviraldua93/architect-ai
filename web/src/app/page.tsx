@@ -25,6 +25,14 @@ const features = [
     gradient: 'from-amber-500/20 to-orange-500/20',
     border: 'hover:border-amber-500/40',
   },
+  {
+    icon: '📊',
+    title: 'Dashboard',
+    description: 'Track progress, study streaks, and weak areas',
+    href: '/dashboard',
+    gradient: 'from-rose-500/20 to-pink-500/20',
+    border: 'hover:border-rose-500/40',
+  },
 ];
 
 export default function Home() {
@@ -66,7 +74,7 @@ export default function Home() {
 
       {/* Feature cards */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map(feature => (
             <Link
               key={feature.title}

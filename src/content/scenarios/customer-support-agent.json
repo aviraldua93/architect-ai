@@ -1,0 +1,107 @@
+{
+  "id": "scenario-customer-support",
+  "title": "Customer Support Resolution Agent",
+  "description": "Your company, TelcoStream, operates a telecommunications platform serving 2.4 million subscribers. The existing customer support system relies on a rule-based chatbot that handles roughly 40% of incoming tickets — primarily password resets, plan upgrades, and billing inquiries. The remaining 60% are escalated to human agents, creating a backlog that averages 47 minutes wait time during peak hours. Leadership has approved a project to build an AI-powered customer support agent using Claude's Messages API to handle the full spectrum of Tier 1 and Tier 2 support requests, with intelligent escalation to human agents for Tier 3 issues.\n\nYou are the architect responsible for designing this agentic system. The agent must operate within a well-structured agentic loop that processes customer messages, invokes tools to look up account information, process refunds, modify plans, and create support tickets, and decides when to escalate to a human agent. The system must handle tool errors gracefully — the billing API occasionally returns 503 errors during nightly batch processing, and the CRM system has a 2-second SLA that is sometimes exceeded during traffic spikes.\n\nThe agent needs to maintain conversation context across multi-turn interactions. Customers frequently start with one issue ('my bill is too high') and pivot to another ('also, my voicemail isn't working') within the same session. The context window must be managed carefully because TelcoStream's average support conversation runs 12–15 turns, and some complex billing disputes extend to 30+ turns with extensive account history.\n\nA critical requirement is auditability. TelcoStream operates under FCC regulations that require complete audit trails for any billing modification. Every tool invocation, every escalation decision, and every refund processed must be logged with timestamps, agent reasoning, and customer consent confirmation. The compliance team requires that no billing change can be executed without the customer explicitly confirming the action — this means the agent must implement a human-in-the-loop confirmation step before executing financial transactions.\n\nThe escalation logic must be sophisticated. The agent should escalate when: (1) the customer explicitly requests a human agent, (2) the customer's sentiment indicates high frustration (detected via Claude's analysis of message tone), (3) the issue involves a billing dispute exceeding $500, (4) the agent has attempted resolution and failed after 3 tool invocations for the same sub-problem, or (5) the issue type is flagged as requiring human judgment (e.g., service cancellation for customers with >5 years tenure). When escalating, the agent must generate a structured handoff summary that includes conversation context, attempted resolutions, account flags, and recommended next steps for the human agent.\n\nThe system must integrate with four external tools via MCP: (1) AccountLookup — retrieves customer profile, plan details, and billing history; (2) BillingActions — processes refunds, applies credits, and modifies plans; (3) TicketManager — creates, updates, and resolves support tickets; (4) EscalationRouter — routes complex issues to the appropriate human agent queue based on issue type and agent availability. Each tool has different error characteristics and retry strategies that the agent must handle appropriately.\n\nPerformance targets: 85% first-contact resolution rate, median response time under 3 seconds per turn, and zero unlogged billing modifications. The system must process 500 concurrent sessions during peak hours without degradation.",
+  "domains": [1, 2, 5],
+  "questions": [
+    {
+      "id": "cs-q01",
+      "domain": 1,
+      "taskStatement": "1.1",
+      "difficulty": "foundation",
+      "scenario": "You are implementing the core agentic loop for TelcoStream's customer support agent. The loop must process Claude's responses, execute tool calls, and determine when the conversation turn is complete. A junior developer proposes checking whether the response contains any text content block to decide if the agent is done processing.",
+      "question": "What is the correct mechanism to determine when Claude has finished its turn in the agentic loop?",
+      "options": {
+        "A": "Check if response.content contains a text block with no tool_use blocks",
+        "B": "Check if response.stop_reason === 'end_turn' to detect when Claude considers its turn complete",
+        "C": "Set a timer and assume the turn is complete after 5 seconds of no additional output",
+        "D": "Parse the text content for phrases like 'Is there anything else I can help with?'"
+      },
+      "correctAnswer": "B",
+      "explanation": "The stop_reason field is Claude's authoritative signal for turn completion. When stop_reason === 'end_turn', Claude has decided it has nothing more to do. Checking for text blocks (Option A) is unreliable because Claude frequently returns text alongside tool_use blocks — explaining what it's about to do before calling a tool. Option C introduces arbitrary timing that doesn't reflect actual completion. Option D uses brittle natural language parsing that will fail when Claude varies its phrasing.",
+      "examTrap": "Option A is the most common trap — developers assume that a text-only response means 'done,' but Claude routinely mixes text and tool_use blocks in a single response. The stop_reason is the only deterministic signal.",
+      "conceptsTested": ["stop_reason", "agentic loop termination", "content block types"]
+    },
+    {
+      "id": "cs-q02",
+      "domain": 5,
+      "taskStatement": "5.2",
+      "difficulty": "intermediate",
+      "scenario": "TelcoStream's support agent must escalate to human agents under specific conditions. The current implementation checks a single boolean flag (shouldEscalate) that is set to true whenever any escalation condition is met. During testing, you notice that low-frustration billing inquiries under $50 are being escalated simply because the customer said 'Can I speak to a manager?' as a casual remark, not a genuine escalation request.",
+      "question": "What is the best architectural approach to implement nuanced escalation logic that avoids false positives while ensuring genuine escalation triggers are never missed?",
+      "options": {
+        "A": "Add more boolean flags for each escalation condition and check them independently",
+        "B": "Implement a confidence-scored escalation system where each trigger contributes a weighted score, and escalation occurs only when the aggregate score exceeds a calibrated threshold — with mandatory escalation for hard triggers like explicit customer requests",
+        "C": "Use Claude's system prompt to instruct the model to only escalate when absolutely necessary",
+        "D": "Log all potential escalation triggers and have a human review queue decide which ones to escalate"
+      },
+      "correctAnswer": "B",
+      "explanation": "A confidence-scored escalation system provides the nuanced decision-making needed for complex support scenarios. Soft triggers (mild frustration, casual mentions of managers) contribute partial scores, while hard triggers (explicit escalation requests, billing disputes over $500) bypass the scoring and force immediate escalation. This avoids the false-positive problem of boolean flags (Option A) where any single trigger causes escalation regardless of context. Option C is unreliable because prompt instructions cannot guarantee consistent behavior. Option D adds unacceptable latency for genuine escalation needs.",
+      "examTrap": "Option A appears systematic but creates a combinatorial explosion — with 5+ escalation conditions, boolean flags cannot capture the nuanced interactions between triggers (e.g., mild frustration + small billing issue ≠ escalation, but mild frustration + repeated tool failures = escalation).",
+      "conceptsTested": ["escalation patterns", "confidence scoring", "hard vs soft triggers", "false positive reduction"]
+    },
+    {
+      "id": "cs-q03",
+      "domain": 2,
+      "taskStatement": "2.2",
+      "difficulty": "intermediate",
+      "scenario": "The BillingActions tool occasionally returns HTTP 503 errors during TelcoStream's nightly batch processing window (2:00–4:00 AM UTC). The AccountLookup tool sometimes exceeds its 2-second SLA during traffic spikes, returning a timeout error. The current error handling treats all tool errors identically — returning a generic 'Tool execution failed' message to Claude.",
+      "question": "How should the agent's tool error handling distinguish between these error types to provide optimal recovery behavior?",
+      "options": {
+        "A": "Return all errors as is_error: true with the raw error message so Claude can decide what to do",
+        "B": "Classify errors as retryable (503, timeout) vs permanent (400, 404) and return structured error responses with error type, retry eligibility, and suggested wait time — using exponential backoff for retryable errors",
+        "C": "Catch all errors silently and return a default successful response with empty data to avoid confusing Claude",
+        "D": "Implement a circuit breaker that disables all tool calls for 5 minutes after any error occurs"
+      },
+      "correctAnswer": "B",
+      "explanation": "Structured error classification is essential for intelligent agent recovery. A 503 from BillingActions during batch processing is transient and should be retried with exponential backoff. A timeout from AccountLookup may resolve on the next attempt. But a 400 (bad request) or 404 (account not found) will never succeed on retry. By returning structured error responses with error_type, is_retryable, and suggested_retry_after fields, the agent can make informed decisions: retry transient errors, report permanent errors to the customer, and escalate when retries are exhausted. Option A gives Claude raw errors without actionable metadata. Option C is dangerous — hiding errors leads to incorrect agent behavior. Option D is overly aggressive — one tool's error shouldn't disable unrelated tools.",
+      "examTrap": "Option A seems reasonable ('let Claude figure it out'), but raw error messages lack the structured metadata Claude needs to make consistent retry decisions. Without explicit is_retryable classification, Claude may hallucinate retry logic or give up on retryable errors.",
+      "conceptsTested": ["structured error responses", "retryable vs permanent errors", "exponential backoff", "error classification"]
+    },
+    {
+      "id": "cs-q04",
+      "domain": 5,
+      "taskStatement": "5.1",
+      "difficulty": "advanced",
+      "scenario": "TelcoStream's average support conversation runs 12–15 turns, but complex billing disputes can extend to 30+ turns with extensive account history injected via tool results. At turn 25, the agent starts losing track of earlier conversation context — repeating questions the customer already answered and failing to reference previous tool results. The full conversation history exceeds 180,000 tokens.",
+      "question": "What is the most effective context management strategy for maintaining coherent long-running support conversations?",
+      "options": {
+        "A": "Increase the model's max_tokens parameter to accommodate the full conversation",
+        "B": "Implement a sliding window that drops the oldest messages when approaching the context limit",
+        "C": "Implement a tiered context strategy: maintain a running summary of the conversation, preserve the most recent 5 turns verbatim, keep all unresolved tool results, and store a structured 'conversation state' object that tracks customer intent, resolved issues, and pending actions",
+        "D": "Start a new conversation every 15 turns and pass a brief handoff note to the new session"
+      },
+      "correctAnswer": "C",
+      "explanation": "A tiered context strategy preserves the most important information while managing token limits. The running summary captures the full conversation arc without consuming excessive tokens. Recent turns preserve exact wording for conversational coherence. Unresolved tool results ensure the agent doesn't re-fetch data it already has. The structured state object provides a 'working memory' that survives context compression. Option A confuses max_tokens (output limit) with context window capacity. Option B loses critical early context like the customer's original issue statement. Option D creates a jarring customer experience and risks losing nuanced context that a brief note cannot capture.",
+      "examTrap": "Option B (sliding window) is the most tempting wrong answer because it's a common pattern in chat applications. But for support conversations, the earliest messages often contain the most important context — the customer's original complaint and initial account lookup results. Dropping them causes the agent to 're-discover' information it already had.",
+      "conceptsTested": ["context window management", "tiered context strategy", "conversation summarization", "working memory pattern"]
+    },
+    {
+      "id": "cs-q05",
+      "domain": 5,
+      "taskStatement": "5.6",
+      "difficulty": "advanced",
+      "scenario": "TelcoStream's compliance team requires complete audit trails for every billing modification. The current implementation logs tool calls at the application level, but during a compliance audit, the team discovers gaps: some refund operations were logged as successful but the billing system shows no record of the refund, and vice versa. The audit log also lacks the agent's reasoning for why it chose to issue a refund.",
+      "question": "How should the audit logging system be architected to meet compliance requirements and ensure log-to-action consistency?",
+      "options": {
+        "A": "Add more detailed logging statements throughout the codebase and store logs in a separate database",
+        "B": "Implement an event-sourced audit system where every state change is captured as an immutable event — including the agent's pre-action reasoning (extracted from Claude's text blocks), the tool input/output, the external system's confirmation, and a reconciliation step that verifies the audit log matches the external system's state",
+        "C": "Use the billing system's built-in audit log instead of maintaining a separate log",
+        "D": "Have the agent include audit information in its responses to the customer so there's a natural language record"
+      },
+      "correctAnswer": "B",
+      "explanation": "Event-sourced audit logging solves the consistency gaps by treating the audit trail as the source of truth. Each event is immutable and captures the full lifecycle: (1) agent reasoning — why the action was chosen, extracted from Claude's text content blocks before the tool call; (2) tool invocation — exact input parameters; (3) tool result — exact output including success/failure; (4) reconciliation — an async verification that the external system's state matches the logged outcome. This catches the exact gap TelcoStream experienced — where application logs and billing system records diverged. Option A is ad-hoc and doesn't address the consistency problem. Option C relies on an external system's log format which may not capture agent reasoning. Option D is not a reliable audit mechanism.",
+      "examTrap": "Option C seems pragmatic ('use what's already there'), but the billing system's audit log cannot capture the agent's reasoning or the full request/response lifecycle. Compliance requires knowing WHY a refund was issued, not just THAT it was issued.",
+      "conceptsTested": ["audit logging", "event sourcing", "provenance tracking", "log-action consistency", "compliance requirements"]
+    }
+  ],
+  "walkthrough": "Step 1: Design the Agentic Loop — Implement a while loop that sends messages to Claude's Messages API and processes responses. Use stop_reason === 'end_turn' as the termination condition. Include a budget-aware safety limit based on token consumption rather than arbitrary iteration counts. Reference: src/agents/loop.ts demonstrates the canonical loop pattern.\n\nStep 2: Define Tool Interfaces — Create four MCP tools (AccountLookup, BillingActions, TicketManager, EscalationRouter) with precise descriptions that help Claude select the right tool. Each tool definition includes Zod input schemas for validation. Reference: src/tools/definitions.ts shows tool definition patterns.\n\nStep 3: Implement Structured Error Handling — Classify tool errors as retryable (503, timeout) or permanent (400, 404, 422). Return structured error responses with error_type, is_retryable, suggested_retry_after, and human_readable_message fields. Implement exponential backoff for retryable errors with a maximum of 3 retry attempts. Reference: src/tools/error-handling.ts provides the ToolError class and retry logic.\n\nStep 4: Build the Escalation System — Implement a confidence-scored escalation engine. Soft triggers (sentiment analysis, casual manager mentions) contribute weighted scores. Hard triggers (explicit escalation requests, >$500 disputes, 3+ failed tool attempts for same sub-problem) force immediate escalation. When escalating, generate a structured handoff summary including conversation context, attempted resolutions, and recommended next steps. Reference: src/context/escalation.ts contains escalation patterns.\n\nStep 5: Implement Context Management — Use a tiered context strategy with three layers: (1) a running conversation summary updated every 5 turns, (2) the most recent 5 turns preserved verbatim, (3) a structured state object tracking customer intent, resolved issues, pending actions, and active tool results. Monitor token usage and trigger summarization when approaching 75% of context window capacity. Reference: src/context/session-manager.ts manages session state.\n\nStep 6: Add Audit Logging — Implement event-sourced audit logging that captures every state change as an immutable event. Before each billing tool call, extract Claude's reasoning from the preceding text content blocks. After each tool call, log the full input/output. Add an async reconciliation job that verifies audit log entries against the billing system's records. Implement the human-in-the-loop confirmation gate: before executing any financial transaction, the agent must present the action to the customer and receive explicit confirmation.\n\nStep 7: Testing and Validation — Test the full flow with scenarios covering: normal resolution, escalation triggers, tool errors during batch processing, long conversations requiring context management, and audit log completeness. Verify that zero billing modifications occur without audit log entries.",
+  "relatedFiles": [
+    "src/agents/loop.ts",
+    "src/tools/error-handling.ts",
+    "src/context/escalation.ts",
+    "src/context/session-manager.ts",
+    "src/tools/definitions.ts",
+    "src/agents/hooks.ts"
+  ]
+}

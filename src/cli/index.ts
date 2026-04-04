@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /**
  * architect-ai CLI — Main entry point.
  *
@@ -17,6 +17,10 @@ import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { runQuiz } from './quiz';
+import { runExam } from './exam';
+import { runStudy } from './study';
+import { runAssess } from './assess';
+import { runDashboard } from './dashboard';
 import { c, banner, gap, divider, sectionHeader } from './formatter';
 
 // ── Version ────────────────────────────────────────────────────
@@ -42,6 +46,7 @@ interface ParsedArgs {
   domain?: number;
   taskStatement?: string;
   concept?: string;
+  questionCount?: number;
   flags: Set<string>;
 }
 
@@ -52,6 +57,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   const result: ParsedArgs = {
     command: 'help',
     flags: new Set(),
+    questionCount: undefined,
   };
 
   if (args.length === 0) {
@@ -75,6 +81,24 @@ function parseArgs(argv: string[]): ParsedArgs {
     } else if (arg === '-t' || arg === '--task') {
       if (i + 1 < args.length) {
         result.taskStatement = args[i + 1];
+        i += 2;
+        continue;
+      }
+    } else if (arg === '-c' || arg === '--count') {
+      if (i + 1 < args.length) {
+        const n = parseInt(args[i + 1], 10);
+        if (!isNaN(n) && n > 0) {
+          result.questionCount = n;
+        }
+        i += 2;
+        continue;
+      }
+    } else if (arg === '-q' || arg === '--questions') {
+      if (i + 1 < args.length) {
+        const n = parseInt(args[i + 1], 10);
+        if (!isNaN(n) && n > 0) {
+          result.questionCount = n;
+        }
         i += 2;
         continue;
       }
@@ -105,7 +129,11 @@ async function cmdHelp(): Promise<void> {
   console.log(`    ${c.accent('quiz')}              Quick practice quiz (10 random questions)`);
   console.log(`    ${c.accent('quiz')} -d ${c.dim('<n>')}       Quiz filtered to Domain n (1–5)`);
   console.log(`    ${c.accent('quiz')} -t ${c.dim('<n.n>')}     Quiz filtered to Task Statement (e.g. 1.1)`);
+  console.log(`    ${c.accent('exam')}              Full CCA-F mock exam (60 questions, 120 min)`);
+  console.log(`    ${c.accent('exam')} ${c.dim('--no-timer')}   Practice exam without countdown`);
+  console.log(`    ${c.accent('exam')} ${c.dim('-q <n>')}       Custom question count (default 60)`);
   console.log(`    ${c.accent('assess')}            Check exam readiness (scores per domain)`);
+  console.log(`    ${c.accent('dashboard')}         Progress dashboard with streaks & SRS stats`);
   console.log(`    ${c.accent('explain')} ${c.dim('<concept>')} Explain a concept ${c.dim('(Tier 3 — requires API key)')}`);
   console.log(`    ${c.accent('version')}           Show version`);
   console.log(`    ${c.accent('help')}              Show this help message`);
@@ -139,35 +167,27 @@ async function cmdQuiz(args: ParsedArgs): Promise<void> {
   });
 }
 
-async function cmdStudy(): Promise<void> {
-  banner();
-  sectionHeader('📚', 'INTERACTIVE STUDY SESSION');
-  console.log('');
-  console.log(c.yellow('  Coming soon! Study mode will guide you through each domain with:'));
-  console.log('');
-  console.log(`    ${c.dim('•')} Concept explanations with real code examples`);
-  console.log(`    ${c.dim('•')} Guided practice exercises`);
-  console.log(`    ${c.dim('•')} Spaced repetition scheduling`);
-  console.log(`    ${c.dim('•')} Progress tracking across sessions`);
-  console.log('');
-  console.log(`  ${c.dim('In the meantime, try:')} ${c.accent('architect-ai quiz')}`);
-  gap();
+async function cmdExam(args: ParsedArgs): Promise<void> {
+  await runExam({
+    questionCount: args.questionCount,
+    noTimer: args.flags.has('--no-timer'),
+  });
+}
+
+async function cmdStudy(args: ParsedArgs): Promise<void> {
+  await runStudy({
+    domain: args.domain,
+    taskStatement: args.taskStatement,
+    count: args.questionCount,
+  });
 }
 
 async function cmdAssess(): Promise<void> {
-  banner();
-  sectionHeader('📊', 'EXAM READINESS ASSESSMENT');
-  console.log('');
-  console.log(c.yellow('  Coming soon! The assessment will provide:'));
-  console.log('');
-  console.log(`    ${c.dim('•')} Score breakdown by domain (1–5)`);
-  console.log(`    ${c.dim('•')} Confidence levels per task statement`);
-  console.log(`    ${c.dim('•')} Personalised study recommendations`);
-  console.log(`    ${c.dim('•')} Estimated exam readiness percentage`);
-  console.log(`    ${c.dim('•')} Historical progress over time`);
-  console.log('');
-  console.log(`  ${c.dim('In the meantime, try:')} ${c.accent('architect-ai quiz')}`);
-  gap();
+  await runAssess();
+}
+
+async function cmdDashboard(): Promise<void> {
+  await runDashboard();
 }
 
 async function cmdExplain(args: ParsedArgs): Promise<void> {
@@ -208,13 +228,22 @@ async function main(): Promise<void> {
       await cmdQuiz(args);
       break;
 
+    case 'exam':
+      await cmdExam(args);
+      break;
+
     case 'study':
-      await cmdStudy();
+      await cmdStudy(args);
       break;
 
     case 'assess':
     case 'assessment':
       await cmdAssess();
+      break;
+
+    case 'dashboard':
+    case 'dash':
+      await cmdDashboard();
       break;
 
     case 'explain':

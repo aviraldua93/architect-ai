@@ -277,12 +277,20 @@ export async function runQuiz(opts: QuizOptions = {}): Promise<void> {
   try {
     banner();
 
-    // Load and filter questions
-    const allQuestions = await loadQuestions();
+    // Load and filter questions with error boundary
+    let allQuestions: Question[];
+    try {
+      allQuestions = await loadQuestions();
+    } catch (error) {
+      console.error(`\n  Failed to start quiz: ${error instanceof Error ? error.message : 'Unknown error'}\n`);
+      console.error('  Check that question files exist in src/content/questions/\n');
+      process.exit(1);
+    }
+
     let questions = filterQuestions(allQuestions, opts);
 
     if (questions.length === 0) {
-      console.log(c.yellow('  ⚠️  No questions found for the selected filter.'));
+      console.error('\n  No questions match your filters.\n');
       if (opts.domain) {
         console.log(c.dim(`     Domain: ${opts.domain} (${DOMAIN_NAMES[opts.domain] || 'Unknown'})`));
       }
@@ -292,7 +300,7 @@ export async function runQuiz(opts: QuizOptions = {}): Promise<void> {
       console.log('');
       console.log(c.dim('  Try running without filters: ') + c.bold('architect-ai quiz'));
       console.log('');
-      return;
+      process.exit(1);
     }
 
     // Shuffle and limit

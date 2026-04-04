@@ -1,0 +1,106 @@
+{
+  "id": "scenario-multi-agent-research",
+  "title": "Multi-Agent Research System",
+  "description": "You are the architect at InsightLab, a market research firm that delivers competitive intelligence reports for Fortune 500 clients. The firm has been manually compiling research reports — a process that takes a team of 4 analysts roughly 3 weeks per report. Leadership wants to build an AI-powered multi-agent research system that can produce draft competitive intelligence reports in under 24 hours, with human analysts reviewing and refining the AI-generated output.\n\nThe system must follow a hub-and-spoke architecture. A central Coordinator agent receives a research brief (e.g., 'Analyze the competitive landscape for enterprise AI coding assistants, covering GitHub Copilot, Cursor, Windsurf, and Claude Code — focusing on pricing, feature differentiation, developer adoption metrics, and enterprise security compliance'). The Coordinator decomposes this brief into discrete research tasks and spawns specialist Subagents to handle each task independently.\n\nThe Subagent types include: (1) WebResearcher — searches the web for recent articles, press releases, and analyst reports; (2) DataAnalyst — processes structured data from industry databases and generates statistical summaries; (3) CompetitorProfiler — builds detailed profiles of each competitor by synthesizing multiple sources; (4) TrendAnalyzer — identifies market trends and patterns across the collected data; (5) ReportWriter — synthesizes all findings into a cohesive narrative report.\n\nA critical architectural challenge is Subagent isolation. Each Subagent must operate independently with its own context window — they cannot share memory or communicate directly with each other. The Coordinator is the only entity that can read Subagent outputs and pass information between them. This isolation is intentional: it prevents context contamination (where one agent's errors propagate to others) and enables parallel execution.\n\nThe system must handle result synthesis carefully. When multiple Subagents research the same topic from different angles, their findings may conflict. For example, WebResearcher might find a press release claiming 'Cursor has 500,000 paid users' while DataAnalyst's database shows 'Cursor has 350,000 enterprise licenses.' The Coordinator must detect these conflicts, assess source reliability, and either reconcile the discrepancy or flag it for human review.\n\nContext management is the system's biggest technical challenge. The Coordinator's context window fills rapidly because it receives outputs from multiple Subagents. A typical research project involves 5–8 Subagents, each producing 2,000–5,000 tokens of output. The Coordinator must manage its own context budget: summarizing Subagent outputs, discarding intermediate reasoning, and maintaining only the essential findings needed for the next phase of work.\n\nThe system operates in three phases: (1) Decomposition — the Coordinator analyzes the research brief and creates a task graph with dependencies; (2) Execution — Subagents execute their tasks in parallel where possible, sequentially where dependencies exist; (3) Synthesis — the Coordinator collects all outputs, resolves conflicts, identifies gaps, and dispatches the ReportWriter to produce the final report. If gaps are identified during synthesis, the Coordinator may spawn additional Subagents for targeted follow-up research.\n\nError handling must be robust. If a WebResearcher fails (e.g., rate-limited by a website), the Coordinator should retry with a different search strategy rather than failing the entire research project. If a Subagent produces low-quality output (detected via a quality rubric), the Coordinator should re-spawn it with a refined prompt rather than passing poor-quality data downstream. The system must also handle partial failures gracefully — if 4 out of 5 competitor profiles are successfully generated but one fails after retries, the system should produce the report with a noted gap rather than blocking entirely.\n\nPerformance requirements: complete a standard competitive intelligence report within 4 hours of wall-clock time, support up to 12 concurrent Subagents, and maintain Coordinator context utilization below 80% of window capacity throughout the process.",
+  "domains": [1, 5, 2],
+  "questions": [
+    {
+      "id": "mr-q01",
+      "domain": 1,
+      "taskStatement": "1.2",
+      "difficulty": "foundation",
+      "scenario": "InsightLab's Coordinator agent needs to decompose a research brief into tasks and delegate them to specialist Subagents. The architect is evaluating two orchestration patterns: (1) a pipeline where each agent's output feeds directly into the next agent, and (2) a hub-and-spoke where the Coordinator mediates all communication between Subagents. The research tasks have some dependencies (CompetitorProfiler needs WebResearcher data) but also significant parallelism (multiple WebResearchers can work simultaneously).",
+      "question": "Why is the hub-and-spoke pattern preferred over a pipeline for this multi-agent research system?",
+      "options": {
+        "A": "Hub-and-spoke is faster because the Coordinator can process all Subagent outputs simultaneously",
+        "B": "Hub-and-spoke enables the Coordinator to manage context flow, prevent error propagation between agents, support parallel execution of independent tasks, and dynamically adjust the task graph based on intermediate results",
+        "C": "Pipeline architectures cannot support more than 3 agents in sequence",
+        "D": "Hub-and-spoke uses fewer API tokens because agents share a single context window"
+      },
+      "correctAnswer": "B",
+      "explanation": "The hub-and-spoke pattern provides four critical advantages for research systems: (1) Context control — the Coordinator decides what information each Subagent receives, preventing context contamination; (2) Error isolation — if one Subagent fails, the error doesn't cascade through a pipeline; (3) Parallelism — independent tasks (multiple WebResearchers) run concurrently while the Coordinator serializes dependent tasks; (4) Dynamic adaptation — the Coordinator can spawn additional agents, re-run failed tasks, or adjust the task graph based on intermediate findings. Option A is wrong because hub-and-spoke doesn't inherently process faster — the Coordinator processes outputs sequentially. Option C has no basis. Option D is wrong — each Subagent has its own context window.",
+      "examTrap": "Option D is a common misconception — hub-and-spoke agents do NOT share context. Each Subagent has its own independent context window, which is a feature (isolation), not a limitation.",
+      "conceptsTested": ["hub-and-spoke orchestration", "multi-agent patterns", "error isolation", "dynamic task graphs"]
+    },
+    {
+      "id": "mr-q02",
+      "domain": 1,
+      "taskStatement": "1.3",
+      "difficulty": "intermediate",
+      "scenario": "The Coordinator needs to spawn a CompetitorProfiler Subagent that builds a detailed profile of GitHub Copilot. The Subagent needs: (1) the competitor name and focus areas from the research brief, (2) relevant web research findings from a previously completed WebResearcher task, and (3) structured data from a DataAnalyst task. The architect must decide how to configure the Subagent's context to include this information without overwhelming it.",
+      "question": "What is the correct approach to configure the CompetitorProfiler Subagent's context when spawning it?",
+      "options": {
+        "A": "Pass the Coordinator's entire conversation history to the Subagent so it has full context",
+        "B": "Construct a focused context package containing: a clear task description specifying what the Subagent must produce, a concise summary of relevant WebResearcher findings (not raw output), the structured DataAnalyst results, and output format requirements — keeping the total context well within the Subagent's window capacity",
+        "C": "Let the Subagent independently re-research GitHub Copilot from scratch to avoid biasing it with prior findings",
+        "D": "Share a reference to the Coordinator's context window so the Subagent can access information on demand"
+      },
+      "correctAnswer": "B",
+      "explanation": "Effective Subagent spawning requires constructing a focused context package — not forwarding everything the Coordinator knows. The context should include: (1) a clear, specific task description ('Build a competitive profile of GitHub Copilot covering pricing, features, adoption, and enterprise security'); (2) curated inputs — summarized WebResearcher findings, not the raw 5,000-token output; (3) structured data from DataAnalyst in a clean format; (4) explicit output requirements (expected sections, length, format). This keeps the Subagent's context focused and leaves room for its own reasoning. Option A fills the Subagent's context with irrelevant Coordinator-level reasoning about task decomposition. Option C wastes resources and may miss findings the WebResearcher already discovered. Option D is technically impossible — agents cannot share context windows.",
+      "examTrap": "Option A ('give it everything') seems thorough but is counterproductive. The Coordinator's conversation includes task decomposition logic, other competitors' data, and administrative exchanges — none of which helps the CompetitorProfiler. Focused context produces better results than maximal context.",
+      "conceptsTested": ["subagent spawning", "context packaging", "focused context", "information filtering"]
+    },
+    {
+      "id": "mr-q03",
+      "domain": 5,
+      "taskStatement": "5.3",
+      "difficulty": "intermediate",
+      "scenario": "During a research project, the WebResearcher Subagent tasked with researching Windsurf encounters a rate limit from its web search tool after 3 successful searches. It returns a partial result covering pricing and features but missing adoption metrics and enterprise security information. The Coordinator must decide how to handle this partial failure without blocking the entire research project.",
+      "question": "What is the optimal error handling strategy for the Coordinator when a Subagent returns partial results?",
+      "options": {
+        "A": "Retry the entire WebResearcher task from scratch with the same configuration",
+        "B": "Accept the partial results, identify the specific gaps (adoption metrics, enterprise security), and spawn a new targeted Subagent with a refined search strategy to fill only those gaps — while allowing the rest of the pipeline to proceed with the available data",
+        "C": "Mark the Windsurf competitor as 'insufficient data' and exclude it from the final report",
+        "D": "Pause all other Subagents until the WebResearcher completes its full task"
+      },
+      "correctAnswer": "B",
+      "explanation": "Graceful partial failure handling is essential in multi-agent systems. The Coordinator should: (1) accept and preserve the successful partial results (pricing, features); (2) identify specific gaps by comparing the output against the expected deliverables; (3) spawn a new, targeted Subagent with a refined strategy — perhaps using different search terms, alternative data sources, or a different approach to find adoption metrics; (4) allow downstream agents (CompetitorProfiler, TrendAnalyzer) to begin working with available data, with the understanding that their outputs may be updated when gap-filling results arrive. Option A wastes the successful results and may hit the same rate limit. Option C discards a competitor over a recoverable error. Option D creates unnecessary serialization.",
+      "examTrap": "Option A seems logical ('just try again') but violates the principle of preserving partial results. The 3 successful searches produced valuable data — re-running from scratch risks hitting the rate limit again before even reproducing those results.",
+      "conceptsTested": ["partial failure handling", "error propagation", "targeted retry", "graceful degradation"]
+    },
+    {
+      "id": "mr-q04",
+      "domain": 5,
+      "taskStatement": "5.1",
+      "difficulty": "advanced",
+      "scenario": "The Coordinator has received outputs from 7 Subagents, totaling approximately 28,000 tokens of research findings. The Coordinator's context window is at 65% capacity, and it still needs to: (1) analyze all findings for conflicts, (2) identify gaps requiring follow-up research, (3) construct the synthesis brief for the ReportWriter, and (4) potentially spawn 2–3 additional Subagents for gap-filling. The architect must design a context management strategy that prevents the Coordinator from exceeding its context budget.",
+      "question": "What context management approach should the Coordinator use to stay within its context budget while maintaining research quality?",
+      "options": {
+        "A": "Truncate the oldest Subagent outputs to make room for new ones",
+        "B": "Process Subagent outputs in a structured pipeline: for each output, extract key findings into a standardized summary format, detect conflicts with previously summarized findings, update a running 'research state' document that tracks confirmed facts, conflicting claims, and identified gaps — then discard the raw Subagent output after summarization",
+        "C": "Switch to a model with a larger context window",
+        "D": "Split the Coordinator into multiple sub-coordinators, each handling a subset of Subagents"
+      },
+      "correctAnswer": "B",
+      "explanation": "The structured summarization pipeline is the gold standard for Coordinator context management. Each Subagent output is processed through a consistent pipeline: (1) extract key findings into a standardized format (claims with source attribution and confidence); (2) cross-reference against the existing research state to detect conflicts; (3) update the research state document — a living summary that tracks confirmed facts, conflicting claims (with sources), and identified gaps; (4) discard the raw output after processing. This approach is superior because the research state document grows logarithmically (new findings often overlap with existing ones) rather than linearly (each raw output adds 2,000–5,000 tokens). Option A loses potentially critical information without intelligent selection. Option C doesn't solve the fundamental problem — more data will eventually fill any window. Option D adds orchestration complexity without addressing the context management challenge.",
+      "examTrap": "Option D (sub-coordinators) seems architecturally sound but actually makes the problem worse — now you need a meta-coordinator to synthesize across sub-coordinators, adding another layer of context management. Keep the architecture flat when possible.",
+      "conceptsTested": ["context window management", "structured summarization", "research state tracking", "logarithmic vs linear context growth"]
+    },
+    {
+      "id": "mr-q05",
+      "domain": 1,
+      "taskStatement": "1.6",
+      "difficulty": "advanced",
+      "scenario": "The Coordinator receives a research brief: 'Analyze the competitive landscape for enterprise AI coding assistants.' It must decompose this into a task graph with proper dependencies. Some tasks are independent (researching different competitors), while others depend on earlier results (trend analysis requires all competitor profiles). The Coordinator must also estimate the total token budget and determine whether the research can be completed within the system's cost constraints.",
+      "question": "What is the most effective approach for the Coordinator to decompose the research brief into an executable task graph?",
+      "options": {
+        "A": "Create a linear sequence of tasks: research competitor 1, then competitor 2, then competitor 3, then analyze trends, then write report",
+        "B": "Immediately spawn all possible Subagents in parallel and let them figure out dependencies",
+        "C": "Analyze the brief to identify: independent task clusters that can run in parallel (e.g., per-competitor research), dependency edges between clusters (e.g., TrendAnalyzer depends on all CompetitorProfilers), estimated token budget per task, and critical path — then generate a phased execution plan where each phase contains tasks whose dependencies are satisfied, with cost checkpoints between phases",
+        "D": "Ask the user to manually specify the task decomposition and dependencies"
+      },
+      "correctAnswer": "C",
+      "explanation": "Effective task decomposition requires the Coordinator to build a directed acyclic graph (DAG) of tasks. The process involves: (1) identifying independent clusters — researching Copilot, Cursor, Windsurf, and Claude Code are independent and can be parallelized; (2) mapping dependencies — CompetitorProfiler depends on WebResearcher and DataAnalyst for the same competitor, TrendAnalyzer depends on ALL CompetitorProfilers; (3) estimating token budgets per task based on expected output sizes and tool call costs; (4) computing the critical path — the longest chain of dependent tasks determines minimum wall-clock time; (5) organizing execution into phases where each phase's prerequisites are met. Cost checkpoints between phases allow the Coordinator to abort or adjust if spending exceeds budget. Option A wastes parallelism opportunity. Option B risks spawning agents before their inputs are ready, wasting tokens. Option D defeats the purpose of automation.",
+      "examTrap": "Option B ('spawn everything in parallel') seems efficient but fails for dependent tasks — a CompetitorProfiler spawned before its WebResearcher completes will lack essential input data and produce an inferior profile. Dependency-aware scheduling is essential.",
+      "conceptsTested": ["task decomposition", "DAG execution", "dependency analysis", "critical path", "cost-aware scheduling"]
+    }
+  ],
+  "walkthrough": "Step 1: Design the Hub-and-Spoke Architecture — Define the Coordinator as the central orchestration agent that manages all Subagent lifecycle: spawning, context preparation, output collection, and error handling. Establish the Subagent types (WebResearcher, DataAnalyst, CompetitorProfiler, TrendAnalyzer, ReportWriter) with clear input/output contracts. Reference: src/agents/coordinator.ts implements the hub-and-spoke pattern.\n\nStep 2: Implement Task Decomposition — Build the Coordinator's decomposition logic: parse the research brief, identify entities (competitors, focus areas), map tasks to Subagent types, and construct a task DAG with dependency edges. Include token budget estimation for each task. Reference: src/agents/decomposer.ts handles task decomposition.\n\nStep 3: Configure Subagent Spawning — Implement the spawning mechanism that creates independent Subagent instances with focused context packages. Each Subagent receives: task description, curated inputs from prerequisite tasks, output format requirements, and resource constraints. Ensure Subagent isolation — no shared memory between agents. Reference: src/agents/spawner.ts manages Subagent lifecycle.\n\nStep 4: Build the Synthesis Pipeline — Implement the Coordinator's output processing pipeline: receive Subagent results, extract key findings into standardized format, detect cross-source conflicts, update the research state document, and identify gaps. Build conflict resolution logic that considers source reliability and recency. Reference: src/agents/coordinator.ts contains synthesis logic.\n\nStep 5: Implement Context Management — Add structured summarization to the Coordinator: process each Subagent output through extract → cross-reference → update → discard pipeline. Maintain a compact research state document that tracks confirmed facts, conflicting claims, and gaps. Monitor context utilization and trigger summarization when approaching 75% capacity. Reference: src/context/session-manager.ts manages context budgets.\n\nStep 6: Add Error Handling — Implement partial failure handling: accept successful portions of failed tasks, identify specific gaps, spawn targeted retry agents with refined strategies. Add quality checks on Subagent outputs using a rubric (completeness, specificity, source attribution). Handle cascade failures by continuing with available data and noting gaps in the final report.\n\nStep 7: End-to-End Testing — Test with a real competitive intelligence brief. Verify: task decomposition produces correct DAG, Subagents execute in correct dependency order, conflicts are detected and flagged, context utilization stays below 80%, partial failures are handled gracefully, and the final report covers all requested topics.",
+  "relatedFiles": [
+    "src/agents/coordinator.ts",
+    "src/agents/spawner.ts",
+    "src/agents/decomposer.ts",
+    "src/agents/types.ts",
+    "src/context/session-manager.ts"
+  ]
+}
