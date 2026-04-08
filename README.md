@@ -1,3 +1,5 @@
+<p align="center"><img src="hero.svg" alt="Architect AI Hero" width="800" /></p>
+
 # ArchitectAI — Free Study Tool for the Claude Certified Architect Exam
 
 **The codebase IS the curriculum — every file demonstrates an exam concept in production code.**
