@@ -1,0 +1,202 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0a1a"/>
+      <stop offset="100%" stop-color="#0d1033"/>
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="nodeGlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="masterGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowStrong">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a3e" stroke-width="0.5"/>
+    </pattern>
+    <style>
+      @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+      @keyframes pulse-slow { 0%,100% { opacity: 0.2; } 50% { opacity: 0.6; } }
+      @keyframes dash-flow { 0% { stroke-dashoffset: 24; } 100% { stroke-dashoffset: 0; } }
+      @keyframes float-y { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+      @keyframes scale-pulse { 0%,100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
+      @keyframes ripple { 0% { r: 8; opacity: 0.6; } 100% { r: 28; opacity: 0; } }
+      @keyframes scan { 0% { transform: translateY(-200px); opacity: 0; } 10% { opacity: 0.15; } 90% { opacity: 0.15; } 100% { transform: translateY(200px); opacity: 0; } }
+      @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+      @keyframes particle-up { 0% { transform: translateY(0) scale(1); opacity: 0.8; } 100% { transform: translateY(-60px) scale(0); opacity: 0; } }
+      @keyframes glow-breathe { 0%,100% { filter: drop-shadow(0 0 4px #f59e0b); } 50% { filter: drop-shadow(0 0 12px #8b5cf6); } }
+      .grid-overlay { animation: pulse-slow 8s ease-in-out infinite; }
+      .conn-line { stroke-dasharray: 6 6; animation: dash-flow 1.5s linear infinite; }
+      .conn-line-slow { stroke-dasharray: 8 8; animation: dash-flow 2.5s linear infinite; }
+      .node-pulse { animation: scale-pulse 3s ease-in-out infinite; }
+      .node-float { animation: float-y 4s ease-in-out infinite; }
+      .node-float-d1 { animation: float-y 4.5s ease-in-out 0.5s infinite; }
+      .node-float-d2 { animation: float-y 5s ease-in-out 1s infinite; }
+      .node-float-d3 { animation: float-y 4s ease-in-out 1.5s infinite; }
+      .node-float-d4 { animation: float-y 5.5s ease-in-out 0.8s infinite; }
+      .node-float-d5 { animation: float-y 4.2s ease-in-out 1.2s infinite; }
+      .ripple-ring { animation: ripple 3s ease-out infinite; }
+      .ripple-ring-d { animation: ripple 3s ease-out 1.5s infinite; }
+      .scan-line { animation: scan 6s ease-in-out infinite; }
+      .cursor-blink { animation: blink 1s step-end infinite; }
+      .particle { animation: particle-up 3s ease-out infinite; }
+      .particle-d1 { animation: particle-up 3.5s ease-out 0.5s infinite; }
+      .particle-d2 { animation: particle-up 4s ease-out 1s infinite; }
+      .particle-d3 { animation: particle-up 3s ease-out 1.8s infinite; }
+      .particle-d4 { animation: particle-up 4.5s ease-out 0.3s infinite; }
+      .breathe { animation: glow-breathe 4s ease-in-out infinite; }
+      .panel { fill: #0d0d2a; stroke: #1e1e4a; stroke-width: 1; rx: 6; }
+      .panel-header { fill: #f59e0b; font-family: monospace; font-size: 8px; font-weight: bold; }
+      .panel-text { fill: #94a3b8; font-family: monospace; font-size: 8px; }
+      .panel-text-bright { fill: #e2e8f0; font-family: monospace; font-size: 8px; }
+      .label { fill: #cbd5e1; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 9px; text-anchor: middle; }
+      .status-text { fill: #64748b; font-family: monospace; font-size: 9px; }
+      .status-dot { animation: pulse 2s ease-in-out infinite; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="400" fill="url(#bg)"/>
+  <rect width="800" height="400" fill="url(#grid)" class="grid-overlay"/>
+  <ellipse cx="400" cy="220" rx="220" ry="140" fill="url(#centerGlow)"/>
+
+  <!-- Scan line -->
+  <rect x="0" y="0" width="800" height="3" fill="#f59e0b" opacity="0.1" class="scan-line"/>
+
+  <!-- Connection lines: tree structure -->
+  <!-- Central brain to tier-1 nodes -->
+  <line x1="400" y1="195" x2="310" y2="150" stroke="#f59e0b" stroke-width="1" opacity="0.5" class="conn-line"/>
+  <line x1="400" y1="195" x2="490" y2="150" stroke="#f59e0b" stroke-width="1" opacity="0.5" class="conn-line"/>
+  <line x1="400" y1="195" x2="340" y2="270" stroke="#8b5cf6" stroke-width="1" opacity="0.4" class="conn-line-slow"/>
+  <line x1="400" y1="195" x2="460" y2="270" stroke="#8b5cf6" stroke-width="1" opacity="0.4" class="conn-line-slow"/>
+  <!-- Tier-1 to tier-2 -->
+  <line x1="310" y1="150" x2="260" y2="110" stroke="#f59e0b" stroke-width="0.8" opacity="0.3" class="conn-line-slow"/>
+  <line x1="490" y1="150" x2="540" y2="110" stroke="#f59e0b" stroke-width="0.8" opacity="0.3" class="conn-line-slow"/>
+  <!-- Cross links -->
+  <line x1="310" y1="150" x2="340" y2="270" stroke="#8b5cf6" stroke-width="0.5" opacity="0.2" class="conn-line-slow"/>
+  <line x1="490" y1="150" x2="460" y2="270" stroke="#8b5cf6" stroke-width="0.5" opacity="0.2" class="conn-line-slow"/>
+
+  <!-- Central brain node -->
+  <circle cx="400" cy="195" r="28" fill="none" stroke="#f59e0b" stroke-width="1.5" opacity="0.3" class="ripple-ring"/>
+  <circle cx="400" cy="195" r="28" fill="none" stroke="#f59e0b" stroke-width="1" opacity="0.2" class="ripple-ring-d"/>
+  <circle cx="400" cy="195" r="18" fill="#0d1033" stroke="#f59e0b" stroke-width="2" filter="url(#glowStrong)" class="node-pulse"/>
+  <text x="400" y="199" text-anchor="middle" fill="#f59e0b" font-family="monospace" font-size="14" font-weight="bold">🧠</text>
+
+  <!-- Topic nodes — tier 1 -->
+  <g class="node-float breathe">
+    <circle cx="310" cy="150" r="12" fill="#0d1033" stroke="#f59e0b" stroke-width="1.5" filter="url(#glow)"/>
+    <text x="310" y="154" text-anchor="middle" fill="#fbbf24" font-size="10">⚡</text>
+    <text x="310" y="172" class="label" fill="#fbbf24" font-size="8">Prompt Eng</text>
+  </g>
+  <g class="node-float-d1 breathe">
+    <circle cx="490" cy="150" r="12" fill="#0d1033" stroke="#8b5cf6" stroke-width="1.5" filter="url(#glow)"/>
+    <text x="490" y="154" text-anchor="middle" fill="#a78bfa" font-size="10">🔧</text>
+    <text x="490" y="172" class="label" fill="#a78bfa" font-size="8">Tool Use</text>
+  </g>
+  <g class="node-float-d2 breathe">
+    <circle cx="340" cy="270" r="12" fill="#0d1033" stroke="#22c55e" stroke-width="1.5" filter="url(#glow)"/>
+    <text x="340" y="274" text-anchor="middle" fill="#4ade80" font-size="10">🤖</text>
+    <text x="340" y="292" class="label" fill="#4ade80" font-size="8">Agents</text>
+  </g>
+  <g class="node-float-d3 breathe">
+    <circle cx="460" cy="270" r="12" fill="#0d1033" stroke="#22c55e" stroke-width="1.5" filter="url(#glow)"/>
+    <text x="460" y="274" text-anchor="middle" fill="#4ade80" font-size="10">🛡️</text>
+    <text x="460" y="292" class="label" fill="#4ade80" font-size="8">Safety</text>
+  </g>
+
+  <!-- Tier 2 nodes -->
+  <g class="node-float-d4 breathe">
+    <circle cx="260" cy="110" r="10" fill="#0d1033" stroke="#f59e0b" stroke-width="1" filter="url(#glow)"/>
+    <text x="260" y="114" text-anchor="middle" fill="#fbbf24" font-size="9">🏗️</text>
+    <text x="260" y="130" class="label" fill="#fbbf24" font-size="7">Sys Design</text>
+  </g>
+  <g class="node-float-d5 breathe">
+    <circle cx="540" cy="110" r="10" fill="#0d1033" stroke="#8b5cf6" stroke-width="1" filter="url(#glow)"/>
+    <text x="540" y="114" text-anchor="middle" fill="#a78bfa" font-size="9">🔌</text>
+    <text x="540" y="130" class="label" fill="#a78bfa" font-size="7">MCP</text>
+  </g>
+
+  <!-- Mini quiz panel (left) -->
+  <rect x="40" y="130" width="155" height="110" class="panel"/>
+  <rect x="40" y="130" width="155" height="18" rx="6" fill="#1a1a3e"/>
+  <text x="52" y="143" class="panel-header">▸ EXAM QUESTION</text>
+  <text x="52" y="162" class="panel-text" font-size="7">Which technique reduces</text>
+  <text x="52" y="172" class="panel-text" font-size="7">hallucination in agents?</text>
+  <rect x="52" y="180" width="8" height="8" rx="2" fill="none" stroke="#64748b" stroke-width="0.8"/>
+  <text x="66" y="188" class="panel-text" font-size="7">A. Higher temperature</text>
+  <rect x="52" y="194" width="8" height="8" rx="2" fill="#22c55e" stroke="#22c55e" stroke-width="0.8"/>
+  <text x="66" y="202" class="panel-text-bright" font-size="7">B. Grounding with tools</text>
+  <rect x="52" y="208" width="8" height="8" rx="2" fill="none" stroke="#64748b" stroke-width="0.8"/>
+  <text x="66" y="216" class="panel-text" font-size="7">C. Longer prompts</text>
+  <circle cx="178" cy="225" r="3" fill="#22c55e" class="status-dot"/>
+  <text x="165" y="228" class="panel-text" font-size="7" fill="#22c55e">✓</text>
+
+  <!-- Mini progress panel (right) -->
+  <rect x="605" y="130" width="155" height="110" class="panel"/>
+  <rect x="605" y="130" width="155" height="18" rx="6" fill="#1a1a3e"/>
+  <text x="617" y="143" class="panel-header">▸ MASTERY LEVELS</text>
+  <!-- Progress bars -->
+  <text x="617" y="162" class="panel-text" font-size="7">Prompt Engineering</text>
+  <rect x="617" y="166" width="130" height="4" rx="2" fill="#1a1a3e"/>
+  <rect x="617" y="166" width="110" height="4" rx="2" fill="#22c55e" opacity="0.8"/>
+  <text x="617" y="180" class="panel-text" font-size="7">Tool Use &amp; MCP</text>
+  <rect x="617" y="184" width="130" height="4" rx="2" fill="#1a1a3e"/>
+  <rect x="617" y="184" width="85" height="4" rx="2" fill="#f59e0b" opacity="0.8"/>
+  <text x="617" y="198" class="panel-text" font-size="7">Agent Architecture</text>
+  <rect x="617" y="202" width="130" height="4" rx="2" fill="#1a1a3e"/>
+  <rect x="617" y="202" width="65" height="4" rx="2" fill="#8b5cf6" opacity="0.8"/>
+  <text x="617" y="216" class="panel-text" font-size="7">Safety &amp; Alignment</text>
+  <rect x="617" y="220" width="130" height="4" rx="2" fill="#1a1a3e"/>
+  <rect x="617" y="220" width="95" height="4" rx="2" fill="#22c55e" opacity="0.8"/>
+  <text x="617" y="234" class="panel-text" font-size="7">System Design</text>
+  <rect x="617" y="237" width="130" height="4" rx="2" fill="#1a1a3e"/>
+  <rect x="617" y="237" width="45" height="4" rx="2" fill="#f59e0b" opacity="0.6"/>
+
+  <!-- Title -->
+  <text x="400" y="52" text-anchor="middle" fill="url(#titleGrad)" font-family="'Segoe UI', system-ui, sans-serif" font-size="36" font-weight="bold" letter-spacing="6">ARCHITECT AI</text>
+  <text x="400" y="74" text-anchor="middle" fill="#94a3b8" font-family="'Segoe UI', system-ui, sans-serif" font-size="12" letter-spacing="2">AI-Powered Study Tool for Claude Certified Architect</text>
+
+  <!-- Rising particles -->
+  <circle cx="350" cy="320" r="1.5" fill="#f59e0b" class="particle"/>
+  <circle cx="420" cy="300" r="1" fill="#8b5cf6" class="particle-d1"/>
+  <circle cx="380" cy="340" r="1.2" fill="#22c55e" class="particle-d2"/>
+  <circle cx="450" cy="310" r="1" fill="#f59e0b" class="particle-d3"/>
+  <circle cx="330" cy="330" r="1.5" fill="#8b5cf6" class="particle-d4"/>
+  <circle cx="470" cy="335" r="1" fill="#22c55e" class="particle"/>
+  <circle cx="390" cy="350" r="1.2" fill="#f59e0b" class="particle-d2"/>
+
+  <!-- Corner decorations -->
+  <path d="M 10 30 L 10 10 L 30 10" fill="none" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+  <path d="M 770 30 L 770 10 L 790 10" fill="none" stroke="#f59e0b" stroke-width="1" opacity="0.4" transform="translate(800,0) scale(-1,1)"/>
+  <path d="M 10 370 L 10 390 L 30 390" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.4"/>
+  <path d="M 770 370 L 770 390 L 790 390" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.4" transform="translate(800,400) scale(-1,-1)"/>
+
+  <!-- Status bar -->
+  <rect x="0" y="378" width="800" height="22" fill="#08081a" opacity="0.8"/>
+  <line x1="0" y1="378" x2="800" y2="378" stroke="#1e1e4a" stroke-width="0.5"/>
+  <circle cx="25" cy="389" r="3" fill="#22c55e" class="status-dot"/>
+  <text x="35" y="393" class="status-text">15 exam domains</text>
+  <text x="145" y="393" class="status-text" fill="#1e1e4a">│</text>
+  <text x="160" y="393" class="status-text">200+ questions</text>
+  <text x="265" y="393" class="status-text" fill="#1e1e4a">│</text>
+  <text x="280" y="393" class="status-text">learn by building</text>
+  <text x="700" y="393" class="status-text" fill="#f59e0b" font-size="8">▸ ARCHITECT AI v1.0</text>
+</svg>
