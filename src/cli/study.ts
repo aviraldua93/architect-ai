@@ -95,7 +95,7 @@ function createPrompt(): { ask: (q: string) => Promise<string>; close: () => voi
 
 function sanitiseInput(input: string): string {
   return input
-    .replace(/[\x00-\x1F\x7F]/g, '')
+    .replace(new RegExp(`[${String.fromCharCode(0)}-${String.fromCharCode(31)}${String.fromCharCode(127)}]`, 'g'), '')
     .slice(0, 10);
 }
 

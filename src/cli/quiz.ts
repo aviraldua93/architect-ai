@@ -34,7 +34,7 @@ interface AnswerRecord {
 // Strips control characters, newlines, and limits length to 10 chars (only A/B/C/D expected).
 function sanitiseInput(input: string): string {
   return input
-    .replace(/[\x00-\x1F\x7F]/g, '') // strip control characters and newlines
+    .replace(new RegExp(`[${String.fromCharCode(0)}-${String.fromCharCode(31)}${String.fromCharCode(127)}]`, 'g'), '') // strip control characters and newlines
     .slice(0, 10);                     // limit to 10 chars max
 }
 

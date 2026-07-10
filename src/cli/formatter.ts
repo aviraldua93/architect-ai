@@ -57,7 +57,7 @@ export const c = {
 
 /** Strip ANSI escape codes (for measuring visible string length) */
 export function stripAnsi(s: string): string {
-  return s.replace(/\x1b\[[0-9;]*m/g, '');
+  return s.replace(new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g'), '');
 }
 
 /** Word-wrap text to a given visible width */

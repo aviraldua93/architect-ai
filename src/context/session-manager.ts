@@ -22,8 +22,8 @@
  * @author Diego Morales, Context Systems Engineer — ArchitectAI
  */
 
-import { readFileSync, writeFileSync, existsSync, statSync } from "fs";
-import { join, dirname } from "path";
+import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from "fs";
+import { join } from "path";
 import { mkdirSync } from "fs";
 
 // ---------------------------------------------------------------------------
@@ -513,8 +513,6 @@ export class SessionManager {
   listSavedSessions(): string[] {
     if (!existsSync(this.sessionsDir)) return [];
 
-    // Use readdirSync to list JSON files
-    const { readdirSync } = require("fs") as typeof import("fs");
     const files = readdirSync(this.sessionsDir) as string[];
     return files
       .filter((f: string) => f.endsWith(".json"))

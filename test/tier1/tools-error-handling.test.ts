@@ -166,7 +166,9 @@ describe('createToolError', () => {
       'context_overflow',
     ];
     for (const type of types) {
-      expect(() => createToolError(type, `test ${type}`)).not.toThrow();
+      const err = createToolError(type, `test ${type}`);
+      expect(err).toBeInstanceOf(ToolError);
+      expect(err.data.error_type).toBe(type);
     }
   });
 });

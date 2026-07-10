@@ -302,12 +302,13 @@ export class ClaudeMdHierarchy {
   /** Find the nearest ancestor directory that has a loaded config. */
   private findParentConfigDir(dir: string): string | null {
     let current = dir;
-    while (true) {
+    while (current.startsWith(this.rootDir)) {
       const parent = current.substring(0, current.lastIndexOf('/'));
       if (parent === current || !parent.startsWith(this.rootDir)) return null;
       if (this.configs.has(parent)) return parent;
       current = parent;
     }
+    return null;
   }
 }
 

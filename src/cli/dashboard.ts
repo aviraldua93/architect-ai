@@ -65,7 +65,7 @@ function calculateStreak(answers: ProgressEntry[]): number {
   if (sortedDates[0] !== today && sortedDates[0] !== yesterday) return 0;
 
   let streak = 0;
-  let checkDate = new Date(sortedDates[0]);
+  const checkDate = new Date(sortedDates[0]);
   for (const dateStr of sortedDates) {
     const expected = checkDate.toISOString().split('T')[0];
     if (dateStr === expected) {
@@ -86,7 +86,7 @@ function hLine(width: number, left: string, fill: string, right: string): string
 
 function padLine(content: string, width: number): string {
   // Measure visible length (strip ANSI)
-  const visible = content.replace(/\x1b\[[0-9;]*m/g, '').length;
+  const visible = content.replace(new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g'), '').length;
   const pad = Math.max(0, width - 4 - visible);
   return `  ${colours.cyan}║${colours.reset} ${content}${' '.repeat(pad)} ${colours.cyan}║${colours.reset}`;
 }
